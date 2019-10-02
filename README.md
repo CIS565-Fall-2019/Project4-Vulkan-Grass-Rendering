@@ -3,7 +3,7 @@ Instructions - Vulkan Grass Rendering
 
 This is due **Wednesday 10/9, evening at midnight**.
 
-Quick Note: Please use `git clone --recursive` when cloning this repo as there are submodules which need to be cloned as well.
+**QUICK NOTE**: Please use `git clone --recursive` when cloning this repo as there are submodules which need to be cloned as well.
 
 **Summary:**
 In this project, you will use Vulkan to implement a grass simulator and renderer. You will
