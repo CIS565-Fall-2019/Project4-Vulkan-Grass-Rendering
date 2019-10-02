@@ -1,6 +1,10 @@
 Instructions - Vulkan Grass Rendering
 ========================
 
+[Link to Intro to Vulkan Slides](https://docs.google.com/presentation/d/1zTqdnUV5hGuff6mPutvc9ZOzHJAPbdm4OzkYXTIZTSE/edit?usp=sharing)
+
+[Link to Grass Rendering Slides](https://docs.google.com/presentation/d/1WqIPLlli2l5A2QfgPOl1cqqkvSRPjiid9OYzSlkAWxM/edit?usp=sharing)
+
 This is due **Wednesday 10/9, evening at midnight**.
 
 **QUICK NOTE**: Please use `git clone --recursive` when cloning this repo as there are submodules which need to be cloned as well.
@@ -291,7 +295,7 @@ list of `SOURCE_FILES`), mentions it explicity.
 Beware of any build issues discussed on the Google Group.
 
 Open a GitHub pull request so that we can see that you have finished.
-The title should be "Project 6: YOUR NAME".
+The title should be "Project 4: YOUR NAME".
 The template of the comment section of your pull request is attached below, you can do some copy and paste:  
 
 * [Repo Link](https://link-to-your-repo)
