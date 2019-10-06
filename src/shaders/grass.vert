@@ -29,5 +29,5 @@ void main() {
 
 	vec4 pos = model * in_v0;
 
-	gl_Position = pos;
+	gl_Position = vec4(pos.xyz, 1.0);
 }

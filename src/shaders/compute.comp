@@ -55,6 +55,68 @@ void main() {
 	}
 	barrier(); // Wait till all threads reach this point
 
+	// gather input
+	vec3 v0 = inBlades[threadIdx].v0.xyz;
+	vec3 v2 = inBlades[threadIdx].v2.xyz;
+	vec3 up = inBlades[threadIdx].up.xyz;
+	float orientation = inBlades[threadIdx].v0.w;
+	float height = inBlades[threadIdx].v1.w;
+	float width = inBlades[threadIdx].v2.w;
+	float stiffness = inBlades[threadIdx].up.w;
+
+	// TODO: Apply forces on every blade and update the vertices in the buffer
+	// gravity force
+	vec3 gravityDir = vec3(0, -1, 0);
+	float gravityAcc = 9.81;
+	vec3 gE = normalize(gravityDir) * gravityAcc;
+	vec3 f = normalize(vec3(cos(orientation), 0.0, sin(orientation)));
+	vec3 gF = 0.25 * length(gE) * f;
+	vec3 gravity = gE + gF;
+
+	// recovery force
+	vec3 iv2 = v0 + (height * up);
+	vec3 recovery = (iv2 - v2) * stiffness;
+
+	// wind force
+	vec3 windDir = vec3(0);
+	vec3 windAlignment = vec3(0);
+	vec3 wind = windDir * windAlignment;
+
+	// total force
+	vec3 totalForce = gravity + recovery + wind;
+	vec3 tv2 = totalForce * deltaTime;
+	v2 = v2 + tv2;
+	v2 = v2 - up * min(dot(up, v2 - v0), 0);
+	
+	float l_proj = length(v2 - v0 - up * dot(v2 - v0, up));
+	vec3 v1 = v0 + height * up * max(1 - (l_proj / height), 0.05 * max(l_proj / height, 1.0));
+
+	float n = 3; // degree of bezier curve
+	float L0;
+	float L1;
+	float L = (2 * L0 + (n - 1) * L1) / (n + 1);
+	float r = height / L;
+
+	vec3 v1_corr = v0 + r * (v1 - v0);
+	vec3 v2_corr = v1_corr + r * (v2 - v1);
+
+	inBlades[threadIdx].v1 = vec4(v1_corr, height);
+	inBlades[threadIdx].v2 = vec4(v2_corr, width);
+
+	// TODO: Cull blades that are too far away or not in the camera frustum and write them
+	// to the culled blades buffer
+	// Note: to do this, you will need to use an atomic operation to read and update numBlades.vertexCount
+	// You want to write the visible blades to the buffer without write conflicts between threads
+
+	// orientation culling
+
+	// view-frustum culling
+
+	// distance culling
+
+	// occlusion culling
+
+
 	culledBlades[threadIdx] = inBlades[threadIdx];
 	numBlades.vertexCount = atomicAdd(numBlades.vertexCount, 1);
 
@@ -64,10 +126,6 @@ void main() {
 	numBlades.firstInstance = 0;
 
 
-    // TODO: Apply forces on every blade and update the vertices in the buffer
 
-	// TODO: Cull blades that are too far away or not in the camera frustum and write them
-	// to the culled blades buffer
-	// Note: to do this, you will need to use an atomic operation to read and update numBlades.vertexCount
-	// You want to write the visible blades to the buffer without write conflicts between threads
+
 }
