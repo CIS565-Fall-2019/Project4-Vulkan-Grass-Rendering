@@ -22,12 +22,12 @@ struct Blade {
 };
 
 layout(set = 2, binding = 0) buffer InputBlades {
-	Blade blades[];
-} inputBlades;
+	Blade inputBlades[];
+};
 
 layout(set = 2, binding = 1) buffer CulledBlades {
-	Blade blades[];
-} culledBlades;
+	Blade culledBlades[];
+};
 
 layout(set = 2, binding = 2) buffer NumBlades {
  	  uint vertexCount;   // Write the number of blades remaining here
@@ -63,6 +63,11 @@ void main() {
 		 numBlades.vertexCount = 0;
 	}
 	barrier(); // Wait till all threads reach this point
+	numBlades.vertexCount = atomicAdd(numBlades.vertexCount, 1);
+	numBlades.instanceCount = 1;
+	numBlades.firstVertex = 0;
+	numBlades.firstInstance = 0;
+	culledBlades[gl_GlobalInvocationID.x] = inputBlades[gl_GlobalInvocationID.x];
 
     // TODO: Apply forces on every blade and update the vertices in the buffer
 
