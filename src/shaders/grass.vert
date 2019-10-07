@@ -30,5 +30,5 @@ void main() {
 	out_v2 = model * v2;
 	out_up = model * up;
 
-	gl_Position = model * v0;
+	gl_Position = model * vec4(v0.xyz, 1.0);
 }

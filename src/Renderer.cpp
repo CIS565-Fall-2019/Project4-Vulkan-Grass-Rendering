@@ -1051,8 +1051,13 @@ void Renderer::RecordComputeCommandBuffer() {
 
     // TODO: For each group of blades bind its descriptor set and dispatch
 	for (int i = 0; i < scene->GetBlades().size(); ++i) {
-		vkCmdBindDescriptorSets(computeCommandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, computePipelineLayout, 1, 1, &computeDescriptorSets.at(i), 0, nullptr);
+		vkCmdBindDescriptorSets(computeCommandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, computePipelineLayout, 2 + i, 1, &computeDescriptorSets[i], 0, nullptr);
 	}
+
+
+
+	vkCmdDispatch(computeCommandBuffer, NUM_BLADES, 1, 1);
+
 
 
     // ~ End recording ~

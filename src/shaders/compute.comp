@@ -67,7 +67,42 @@ void main() {
 	numBlades.instanceCount = 1;
 	numBlades.firstVertex = 0;
 	numBlades.firstInstance = 0;
+
+//	vec4 v0 = inputBlades[gl_GlobalInvocationID.x].v0;
+//	vec4 v1 = inputBlades[gl_GlobalInvocationID.x].v1;
+//	vec4 v2 = inputBlades[gl_GlobalInvocationID.x].v2;
+//	vec4 up = inputBlades[gl_GlobalInvocationID.x].up;
+//
+//	vec3 D = vec3(0.0, -1.0, 0.0);
+//	float gMag = 9.8;
+//	vec3 gE = normalize(D) * gMag;
+//	vec3 f = normalize(vec3(cos(v0.w), 0.f, sin(v0.w)));
+//	vec3 gF = (1.f/4.f) * length(gE) * f;
+//	vec3 g = gE + gF;
+//
+//	vec3 iv2 = v0.xyz + v1.w * up.xyz;
+//	vec3 r = (iv2 - v2.xyz) * up.w;
+//
+//	vec3 tv2 = (g + r) * deltaTime;
+//
+//	v2 += vec4(tv2, 0.f);
+//
+//	v2.xyz = v2.xyz - up.xyz * min(up.xyz * (v2.xyz - v0.xyz), 0.f);
+//
+//	float lproj = length(v2.xyz - v0.xyz - up.xyz * ((v2.xyz - v0.xyz) * up.xyz));
+//
+//	v1.xyz = v0.xyz + v1.w * up.xyz * max(1 - lproj/v1.w, 0.05 * max(lproj/v1.w, 1.f));
+//
+//	float L = (2 * length(v0.xyz) + (3 - 1) * length(v1.xyz)) / (3 + 1);
+//
+//	float rfloat = v1.w / L;
+//	inputBlades[gl_GlobalInvocationID.x].v1 = vec4(v0.xyz + r * (v1.xyz - v0.xyz), v1.w);
+//	inputBlades[gl_GlobalInvocationID.x].v2 = vec4(inputBlades[gl_GlobalInvocationID.x].v1.xyz + r * (v2.xyz - v1.xyz), v2.w);
+
+	inputBlades[gl_GlobalInvocationID.x] = Blade(vec4(1.0), vec4(1.0), vec4(1.0), vec4(1.0));	
+
 	culledBlades[gl_GlobalInvocationID.x] = inputBlades[gl_GlobalInvocationID.x];
+
 
     // TODO: Apply forces on every blade and update the vertices in the buffer
 
