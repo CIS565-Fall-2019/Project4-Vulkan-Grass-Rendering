@@ -62,6 +62,9 @@ private:
     VkDescriptorSet cameraDescriptorSet;
     std::vector<VkDescriptorSet> modelDescriptorSets;
     VkDescriptorSet timeDescriptorSet;
+    //add two new descriptorSet for computing physical force and render grass
+    std::vector<VkDescriptorSet> grassDescriptorSets;
+    //std::vector<VkDescriptorSet> computeDescriptorSets;
 
     VkPipelineLayout graphicsPipelineLayout;
     VkPipelineLayout grassPipelineLayout;
@@ -75,7 +78,7 @@ private:
     VkImage depthImage;
     VkDeviceMemory depthImageMemory;
     VkImageView depthImageView;
-    std::vector<VkFramebuffer> framebuffers;
+    std::vector<VkFramebuffer> framebuffers; //framebuffers for all the images in the swap chain and use the one retrieved
 
     std::vector<VkCommandBuffer> commandBuffers;
     VkCommandBuffer computeCommandBuffer;

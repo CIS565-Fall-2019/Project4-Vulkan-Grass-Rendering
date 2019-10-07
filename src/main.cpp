@@ -104,6 +104,7 @@ int main() {
 
     VkImage grassImage;
     VkDeviceMemory grassImageMemory;
+    //seems like import from a specific texture
     Image::FromFile(device,
         transferCommandPool,
         "images/grass.jpg",
@@ -118,6 +119,7 @@ int main() {
 
     float planeDim = 15.f;
     float halfWidth = planeDim * 0.5f;
+    //define the ground by four vertices
     Model* plane = new Model(device, transferCommandPool,
         {
             { { -halfWidth, 0.0f, halfWidth }, { 1.0f, 0.0f, 0.0f },{ 1.0f, 0.0f } },
@@ -129,14 +131,17 @@ int main() {
     );
     plane->SetTexture(grassImage);
     
+    //create all grass blades
     Blades* blades = new Blades(device, transferCommandPool, planeDim);
 
     vkDestroyCommandPool(device->GetVkDevice(), transferCommandPool, nullptr);
 
+    //store the ground and blades into the scene, which only contains the time buffer, what is that for?
     Scene* scene = new Scene(device);
     scene->AddModel(plane);
     scene->AddBlades(blades);
 
+    //start rendering
     renderer = new Renderer(device, swapChain, scene, camera);
 
     glfwSetWindowSizeCallback(GetGLFWWindow(), resizeCallback);

@@ -28,6 +28,7 @@ Blades::Blades(Device* device, VkCommandPool commandPool, float planeDim) : Mode
         currentBlade.v1 = glm::vec4(bladePosition + bladeUp * height, height);
 
         // Physical model guide and width (v2)
+        // v2 is the same as v1 at the beginning
         float width = MIN_WIDTH + (generateRandomFloat() * (MAX_WIDTH - MIN_WIDTH));
         currentBlade.v2 = glm::vec4(bladePosition + bladeUp * height, width);
 
