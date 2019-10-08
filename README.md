@@ -92,7 +92,7 @@ Three Culling:
 
 For orientation culling, the blades do not have thickness, so we need to check the direction of it, and make sure we can see the face, instead of just a line (then it will be culled!).
 
-For distance culling, set a max distance and subdivide the part between 0 to max distance into sever levels, in each level we cull different amount of blades, the nearer, the less.
+For distance culling, project the camera-v0 vector to up vector plane. Get the horizontal length. Set a max distance and subdivide the part between 0 to max distance into several levels, in each level we cull different amount of blades, the nearer, the less.
 
 ![](img/discul.gif) 
 
@@ -125,6 +125,14 @@ Increasing the amount of blades, the tendency of saving time keep being same amo
 The strange problem is when I first try to apply force to the grass, I find that the grass may suddenly start from a very low height to the origin height. That's because I do not use dot in compute shader, I use *.
 
 ![](img/error.gif)
+
+
+
+The second error is about the distance culling, when we rotate with mouse ,we move the plane, not the camera, so we need to convert the v0 into the camera space to calculate the dproj.
+
+![](img/disno.gif)
+
+![](img/disyes.gif)
 
 
 

@@ -92,9 +92,10 @@ void main() {
 	vec3 r = (iv2 - v2) * stif;
 
 	//wind
-	float windf = sin(0.5 * timer.totalTime);
-	float windf2 = cos(2.0 * v0.x);
-	vec3 winddir = vec3(1 * windf, windf2, -windf2);
+	float windf = sin(0.05 * timer.totalTime);
+	float windf2 = cos(2.0 * v0.x * timer.totalTime);
+	float windf3 = cos(3.0 * v0.z * timer.totalTime);
+	vec3 winddir = vec3(windf, windf2, windf3);
 	float fr = dot((v2-v0), up) / hei;
 	float fd = 1.0 - abs(dot(normalize(winddir), normalize(v2 - v0)));  
 	float windalig = fd * fr;
@@ -140,7 +141,7 @@ void main() {
 	//view culling
 	bool view_cull = false;
 	
-	float t = 0.05;//tolerance
+	float t = -0.04;//tolerance
 	vec4 v0NDC = camera.proj * camera.view * vec4(v0, 1.0);
 	float hv0 =  v0NDC.w + t;
 	bool is_v0 = inBounds(v0NDC.x, hv0) && inBounds(v0NDC.y, hv0) && inBounds(v0NDC.z, hv0);
@@ -161,17 +162,20 @@ void main() {
 
 	//distance culling
 	bool dis_cull = false;
-	vec3 cam_p = vec3(-camera.view[3][0], -camera.view[3][1], -camera.view[3][2]);
-	float dproj = length(v0 - cam_p - up * dot(v0 - cam_p, up));
+	//when we rotate the plane is rotating
+	vec3 v0c = (camera.view * vec4(v0, 1.0)).xyz;
+	vec3 upc = normalize((camera.view * vec4(up, 0.0)).xyz);
+	float dproj = length(v0c - vec3(0,0,0) - upc * dot(v0c - vec3(0,0,0), upc));//in camera space the camera is at zero
+	//vec3 cam_p = vec3(-camera.view[3][0], -camera.view[3][1], -camera.view[3][2]);
+	//float dproj = length(v0 - cam_p - up * dot((v0 - cam_p), up));
 	float bucket_num = 4.0;
 	float max_dis = 30.0;
 	uint distanceBucketNum = int(max_dis / bucket_num);
 	if ((ind % distanceBucketNum) > distanceBucketNum * (1.0 - dproj / max_dis)){
 		dis_cull = true;
 	}
-	
 
-	if(!(ori_cull||dis_cull||view_cull)){
+	if(!(ori_cull)){
 		culled_b[atomicAdd(numBlades.vertexCount, 1)] = input_b[ind];
 	}
 }
