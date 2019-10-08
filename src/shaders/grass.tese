@@ -49,6 +49,9 @@ void main() {
 
 	pos = camera.proj * camera.view * pos;
 
+	//vec3 d = width * n * (0.5 - abs(u - 0.5) * (1 - v));
+	//pos += vec4(d, 0.0);
+
 	vec4 lightPos = vec4(0.0, 5.0, 0.0, 1.0);
 	out_lightDir = lightPos - pos;
 

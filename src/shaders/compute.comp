@@ -3,6 +3,10 @@
 
 #define PI 3.141592653238
 
+#define ORIENTATION_CULL 1
+#define FRUSTUM_CULL 1
+#define DISTANCE_CULL 1
+
 #define WORKGROUP_SIZE 32
 layout(local_size_x = WORKGROUP_SIZE, local_size_y = 1, local_size_z = 1) in;
 
@@ -32,8 +36,8 @@ layout(set = 2, binding = 0) buffer InBlades {
 	Blade inBlades[];
 };
 
-layout(set = 2, binding = 1) buffer CulledBlades {
-	Blade culledBlades[];
+layout(set = 2, binding = 1) buffer RemainingBlades {
+	Blade remainingBlades[];
 };
 
 // The project is using vkCmdDrawIndirect to use a buffer as the arguments for a draw call
@@ -75,8 +79,7 @@ void main() {
 	vec3 gravityDir = vec3(0, -1, 0);
 	float gravityAcc = 9.81;
 	vec3 gE = normalize(gravityDir) * gravityAcc;
-	vec3 f = normalize(vec3(cos(orientation), 0.0, sin(orientation)));
-	vec3 gF = 0.25 * length(gE) * f;
+	vec3 gF = 0.25 * length(gE) * faceDir;
 	vec3 gravity = gE + gF;
 
 	// recovery force
@@ -84,9 +87,14 @@ void main() {
 	vec3 recovery = (iv2 - v2) * stiffness;
 
 	// wind force
-	vec3 windDir = vec3(0);
-	vec3 windAlignment = vec3(0);
-	vec3 wind = windDir * windAlignment;
+	vec3 windDir = 10.0 * vec3(cos(totalTime), 0.0, sin(totalTime));
+
+	float dirAlignment = 1.0 - abs(dot(normalize(windDir), normalize(v2 - v0)));
+	float heightRatio = dot(v2 - v0, up) / height;
+	float windAlignment = dirAlignment * heightRatio;
+
+	vec3 wind = windAlignment * windDir;
+	wind = vec3(0);
 
 	// total force
 	vec3 totalForce = gravity + recovery + wind;
@@ -106,6 +114,7 @@ void main() {
 	vec3 v1_corr = v0 + r * (v1 - v0);
 	vec3 v2_corr = v1_corr + r * (v2 - v1);
 
+	// update values
 	inBlades[threadIdx].v1 = vec4(v1_corr, height);
 	inBlades[threadIdx].v2 = vec4(v2_corr, width);
 
@@ -114,25 +123,57 @@ void main() {
 	// Note: to do this, you will need to use an atomic operation to read and update numBlades.vertexCount
 	// You want to write the visible blades to the buffer without write conflicts between threads
 
-	// orientation culling
-	bool orientationCull = false;
-	vec3 bladeFaceDir = normalize(vec3(cos(orientation), 0.0, sin(orientation)));
-	mat4 invView = camera.view;//transpose(camera.view);
+	bool cull = false;
+	mat4 invView = inverse(camera.view);
+
+#if ORIENTATION_CULL
+	// orientation culling	
 	vec3 viewDir = normalize(vec3(-invView[0][2], -invView[1][2], -invView[2][2]));
 
-	vec4 viewDir4 = normalize(inverse(camera.view) * vec4(0, 0, -1, 0));
+	vec4 viewDir4 = normalize(inverse(camera.view) * vec4(0, 0, 0, 1.0));
 
-	orientationCull = abs(dot(faceDir, viewDir4.xyz)) < 0.9;
+	vec3 cameraPos2 = vec3(invView[3][0], invView[3][1], invView[3][2]);
+	vec3 viewDir5 = normalize(cameraPos2 - v0);
 
+	//cull = cull || abs(dot(orientationDir, viewDir5.xyz)) < 0.9;
+#endif // #if ORIENTATION_CULL
+
+#if FRUSTUM_CULL
 	// view-frustum culling
-	bool frustumCull = false;
+	vec3 m = 0.25 * v0 + 0.5 * v1 + 0.25 * v2; // estimated midpoint of blade
 
+	// project v0, v2, and m to NDC
+	vec4 v0_NDC = camera.proj * camera.view * vec4(v0, 1.0);
+	vec4 v2_NDC = camera.proj * camera.view * vec4(v2, 1.0);
+	vec4 m_NDC = camera.proj * camera.view * vec4(m, 1.0);
+
+	float t = 1.0; // tolerance
+	float v0Bounds = v0_NDC.w + t;
+	float v2Bounds = v2_NDC.w + t;
+	float mBounds = m_NDC.w + t;
+	bool v0InBounds = inBounds(v0_NDC.x / v0_NDC.w, v0Bounds) && inBounds(v0_NDC.y / v0_NDC.w, v0Bounds) && inBounds(v0_NDC.z / v0_NDC.w, v0Bounds);
+	bool v2InBounds = inBounds(v2_NDC.x / v2_NDC.w, v2Bounds) && inBounds(v2_NDC.y / v2_NDC.w, v2Bounds) && inBounds(v2_NDC.z / v2_NDC.w, v2Bounds);
+	bool mInBounds = inBounds(m_NDC.x / m_NDC.w, mBounds) && inBounds(m_NDC.y / m_NDC.w, mBounds) && inBounds(m_NDC.z / m_NDC.w, mBounds);
+
+	// cull blade if all 3 points are outside frustum
+	cull = cull || (!v0InBounds && !v2InBounds && !mInBounds);
+
+#endif // #if FRUSTUM_CULL
+
+#if DISTANCE_CULL
 	// distance culling
-	bool distanceCull = false;
+	vec3 cameraPos = vec3(invView[3][0], invView[3][1], invView[3][2]);
+	int numBuckets = 3; // number of buckets/levels used in distance culling
+	float d_max = 50.0;
+	float d_proj = length(v0 - cameraPos - up * dot(v0 - cameraPos, up));
+	//cull = cull || (mod(threadIdx, numBuckets) > floor(numBuckets * (1.0 - d_proj / d_max)));
+	//float distToCamera = -(camera.view * vec4(v0, 1.0)).z;
+	//cull = cull || (distToCamera > 58.0);
 
-	// occlusion culling
-	bool occlusionCull = false;
+#endif // #if DISTANCE_CULL
 
-	culledBlades[threadIdx] = inBlades[threadIdx];
-	atomicAdd(numBlades.vertexCount, 1);	
+	// if no culling, increment number of blades and add blade to remaining blades
+	if (!cull) {
+		remainingBlades[atomicAdd(numBlades.vertexCount, 1)] = inBlades[threadIdx];
+	}
 }
