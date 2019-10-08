@@ -207,18 +207,18 @@ void Renderer::CreateComputeDescriptorSetLayout() {
     inputBladesLayoutBinding.pImmutableSamplers = nullptr;
 
     VkDescriptorSetLayoutBinding culledBladesLayoutBinding = {};
-    uboLayoutBinding.binding = 1;
-    uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    uboLayoutBinding.descriptorCount = 1;
-    uboLayoutBinding.stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
-    uboLayoutBinding.pImmutableSamplers = nullptr;
+    culledBladesLayoutBinding.binding = 1;
+    culledBladesLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    culledBladesLayoutBinding.descriptorCount = 1;
+    culledBladesLayoutBinding.stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+    culledBladesLayoutBinding.pImmutableSamplers = nullptr;
 
     VkDescriptorSetLayoutBinding numBladesLayoutBinding = {};
-    uboLayoutBinding.binding = 2;
-    uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    uboLayoutBinding.descriptorCount = 1;
-    uboLayoutBinding.stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
-    uboLayoutBinding.pImmutableSamplers = nullptr;
+    numBladesLayoutBinding.binding = 2;
+    numBladesLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    numBladesLayoutBinding.descriptorCount = 1;
+    numBladesLayoutBinding.stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+    numBladesLayoutBinding.pImmutableSamplers = nullptr;
 
     std::vector<VkDescriptorSetLayoutBinding> bindings = { inputBladesLayoutBinding, culledBladesLayoutBinding, numBladesLayoutBinding };
 
@@ -459,19 +459,19 @@ void Renderer::CreateComputeDescriptorSets() {
     //helped by Josh and Hannah
     for (uint32_t i = 0; i < scene->GetBlades().size(); ++i) {
         VkDescriptorBufferInfo inputBufferInfo = {};
-        computeBufferInfo.buffer = scene->GetBlades()[i]->GetBladesBuffer();
-        computeBufferInfo.offset = 0;
-        computeBufferInfo.range = sizeof(Blade);
+        inputBufferInfo.buffer = scene->GetBlades()[i]->GetBladesBuffer();
+        inputBufferInfo.offset = 0;
+        inputBufferInfo.range = sizeof(Blade);
 
         VkDescriptorBufferInfo culledBufferInfo = {};
-        computeBufferInfo.buffer = scene->GetBlades()[i]->GetCulledBladesBuffer();
-        computeBufferInfo.offset = 0;
-        computeBufferInfo.range = sizeof(Blade);
+        culledBufferInfo.buffer = scene->GetBlades()[i]->GetCulledBladesBuffer();
+        culledBufferInfo.offset = 0;
+        culledBufferInfo.range = sizeof(Blade);
 
         VkDescriptorBufferInfo indirectBufferInfo = {};
-        computeBufferInfo.buffer = scene->GetBlades()[i]->GetNumBladesBuffer();
-        computeBufferInfo.offset = 0;
-        computeBufferInfo.range = sizeof(BladeDrawIndirect);
+        indirectBufferInfo.buffer = scene->GetBlades()[i]->GetNumBladesBuffer();
+        indirectBufferInfo.offset = 0;
+        indirectBufferInfo.range = sizeof(BladeDrawIndirect);
 
         //write to input buffer
         descriptorWrites[3 * i + 0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -481,7 +481,7 @@ void Renderer::CreateComputeDescriptorSets() {
         descriptorWrites[3 * i + 0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
         descriptorWrites[3 * i + 0].descriptorCount = 1;
         //only need one of three
-        descriptorWrites[3 * i + 0].pBufferInfo = &computeBufferInfo;
+        descriptorWrites[3 * i + 0].pBufferInfo = &inputBufferInfo;
         descriptorWrites[3 * i + 0].pImageInfo = nullptr;
         descriptorWrites[3 * i + 0].pTexelBufferView = nullptr;
 
@@ -492,7 +492,7 @@ void Renderer::CreateComputeDescriptorSets() {
         descriptorWrites[3 * i + 1].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
         descriptorWrites[3 * i + 1].descriptorCount = 1;
         //only need one of three
-        descriptorWrites[3 * i + 1].pBufferInfo = &computeBufferInfo;
+        descriptorWrites[3 * i + 1].pBufferInfo = &culledBufferInfo;
         descriptorWrites[3 * i + 1].pImageInfo = nullptr;
         descriptorWrites[3 * i + 1].pTexelBufferView = nullptr;
 
@@ -503,7 +503,7 @@ void Renderer::CreateComputeDescriptorSets() {
         descriptorWrites[3 * i + 2].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
         descriptorWrites[3 * i + 2].descriptorCount = 1;
         //only need one of three
-        descriptorWrites[3 * i + 2].pBufferInfo = &computeBufferInfo;
+        descriptorWrites[3 * i + 2].pBufferInfo = &indirectBufferInfo;
         descriptorWrites[3 * i + 2].pImageInfo = nullptr;
         descriptorWrites[3 * i + 2].pTexelBufferView = nullptr;
     }
