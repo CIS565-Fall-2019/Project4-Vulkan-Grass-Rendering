@@ -90,8 +90,8 @@ void main() {
 	vec3 r = (iv2 - v2) * stiffness;
 
 
-	vec3 wi = 20.f * vec3(sin((v0.x + 30.f) * 0.8 + totalTime / 1.2), 0.f, cos((v0.z + 2.5f) * 0.2 + totalTime / 2.5f)) + 
-	          23.f * vec3(cos(v0.z * 0.5 + totalTime / 1.5f + 5.0), 0.f, sin(v0.x * 0.3 + totalTime / 2.f));
+	vec3 wi = 22.f * vec3(sin((v0.x + 30.f) * 0.8 + totalTime / 1.2), 0.f, cos((v0.z + 2.5f) * 0.2 + totalTime / 2.5f)) + 
+	          25.f * vec3(cos(v0.z * 0.5 + totalTime / 1.5f + 5.0), 0.f, sin(v0.x * 0.3 + totalTime / 2.f));
 
 	float fd = 1.f - abs(dot(normalize(wi), normalize(v2 - v0)));
 	float fr = dot(v2 - v0, up) / height;
@@ -121,36 +121,47 @@ void main() {
 
 	bool cullBlade = false;
 	vec3 dirc = f;
-	vec4 cameraPos = inverse(camera.view) * vec4(0, 0, 0, 1);
-	vec3 dirb = normalize(cameraPos.xyz - v0);
+	vec3 cameraForward = vec3(camera.view[2][0], camera.view[2][1], camera.view[2][2]);
+	vec3 dirb = normalize(cameraForward);
 	float orientationValue = abs(dot(dirc, dirb));
-	if (orientationValue > 0.96) {
+	if (orientationValue > 0.98) {
 		cullBlade = true;
 	}
 
-	float tolerance = 0.05;
+	float tolerance = 0.1;
 	vec3 m = (1.f/4.f) * v0 + (1.f/2.f) * v1 * (1.f/4.f) * v2;
 
 	vec4 v0Prime = camera.proj * camera.view * vec4(v0, 1.f);
 	float hv0 = v0Prime.w + tolerance;
 	bool vv0 = (v0Prime.x >= -hv0) && (v0Prime.x <= hv0) && 
 			   (v0Prime.y >= -hv0) && (v0Prime.y <= hv0) && 
-			   (v0Prime.z >= 0.f) && (v0Prime.z <= hv0);
+			   (v0Prime.z >= -tolerance) && (v0Prime.z <= hv0);
 
 
     vec4 mPrime = camera.proj * camera.view * vec4(m, 1.f);
 	float hm = mPrime.w + tolerance;
 	bool vm = (mPrime.x >= -hm) && (mPrime.x <= hm) && 
 			  (mPrime.y >= -hm) && (mPrime.y <= hm) && 
-			  (mPrime.z >= 0.f) && (mPrime.z <= hm);
+			  (mPrime.z >= -tolerance) && (mPrime.z <= hm);
 
 	vec4 v2Prime = camera.proj * camera.view * vec4(v2, 1.f);
 	float hv2 = v2Prime.w + tolerance;
 	bool vv2 = (v2Prime.x >= -hv2) && (v2Prime.x <= hv2) && 
 			   (v2Prime.y >= -hv2) && (v2Prime.y <= hv2) && 
-			   (v2Prime.z >= 0.f) && (v2Prime.z <= hv2);
+			   (v2Prime.z >= -tolerance) && (v2Prime.z <= hv2);
 	if (!vv0 && !vm && !vv2) {
-		cullBlade = true;
+//		cullBlade = true;
+	}
+	
+	vec4 cameraPos = inverse(camera.view) * vec4(0, 0, 0, 1);
+	float dproj = length(v0 - cameraPos.xyz - up * dot(v0 - cameraPos.xyz, up));
+	int numIntervals = 5;
+	float dmax = 100.f;
+	for (int i = 0; i < numIntervals; ++i) {
+		uint modVal = gl_GlobalInvocationID.x - i * (gl_GlobalInvocationID.x / i);
+		if (modVal < floor(i * ((dproj / dmax)))) {
+			cullBlade = true;
+		}
 	}
 
 
