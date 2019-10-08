@@ -154,6 +154,7 @@ int main() {
         renderer->Frame();
     }
 
+    //without this synchronizing, the program will crash after we close it because the drawing is still happening
     vkDeviceWaitIdle(device->GetVkDevice());
 
     vkDestroyImage(device->GetVkDevice(), grassImage, nullptr);

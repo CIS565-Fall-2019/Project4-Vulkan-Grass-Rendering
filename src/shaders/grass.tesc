@@ -57,7 +57,6 @@ void main() {
 	//map to screen space
 	v0_proj /= v0_proj.w;
 	//get depth in normalized screen space
-	//float depth = clamp(v0_proj.z, 0.0, 1.0);
 	float depth = v0_proj.z;
 
 	float tess_height_min = 3.0;
@@ -65,7 +64,7 @@ void main() {
 	float tess_width = 2.0;
 
 	//divide depth into 3 layers
-	float tess_height = mix(tess_height_max, tess_height_min, depth);
+	float tess_height = ceil(mix(tess_height_max, tess_height_min, depth));
 	//float tessLevel = tessLevelmax;
 
 	// TODO: Set level of tesselation

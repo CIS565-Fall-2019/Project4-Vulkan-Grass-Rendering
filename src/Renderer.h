@@ -56,7 +56,9 @@ private:
     VkDescriptorSetLayout cameraDescriptorSetLayout;
     VkDescriptorSetLayout modelDescriptorSetLayout;
     VkDescriptorSetLayout timeDescriptorSetLayout;
-    
+    //compute descriptor layout
+    VkDescriptorSetLayout computeDescriptorSetLayout;
+
     VkDescriptorPool descriptorPool;
 
     VkDescriptorSet cameraDescriptorSet;
@@ -64,7 +66,7 @@ private:
     VkDescriptorSet timeDescriptorSet;
     //add two new descriptorSet for computing physical force and render grass
     std::vector<VkDescriptorSet> grassDescriptorSets;
-    //std::vector<VkDescriptorSet> computeDescriptorSets;
+    std::vector<VkDescriptorSet> computeDescriptorSets;
 
     VkPipelineLayout graphicsPipelineLayout;
     VkPipelineLayout grassPipelineLayout;
@@ -81,5 +83,5 @@ private:
     std::vector<VkFramebuffer> framebuffers; //framebuffers for all the images in the swap chain and use the one retrieved
 
     std::vector<VkCommandBuffer> commandBuffers;
-    VkCommandBuffer computeCommandBuffer;
+    VkCommandBuffer computeCommandBuffer; //only one compute command in this buffer?
 };
