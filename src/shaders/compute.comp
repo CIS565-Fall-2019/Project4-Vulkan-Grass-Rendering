@@ -175,7 +175,7 @@ void main() {
 		dis_cull = true;
 	}
 
-	if(!(ori_cull)){
+	if(!(ori_cull||view_cull||dis_cull)){
 		culled_b[atomicAdd(numBlades.vertexCount, 1)] = input_b[ind];
 	}
 }
