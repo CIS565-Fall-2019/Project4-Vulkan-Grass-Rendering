@@ -5,28 +5,29 @@
 #include "Device.h"
 
 struct CameraBufferObject {
-  glm::mat4 viewMatrix;
-  glm::mat4 projectionMatrix;
+	glm::mat4 viewMatrix;
+	glm::mat4 projectionMatrix;
+	glm::vec3 pos;
 };
 
 class Camera {
 private:
-    Device* device;
-    
-    CameraBufferObject cameraBufferObject;
-    
-    VkBuffer buffer;
-    VkDeviceMemory bufferMemory;
+	Device* device;
 
-    void* mappedData;
+	CameraBufferObject cameraBufferObject;
 
-    float r, theta, phi;
+	VkBuffer buffer;
+	VkDeviceMemory bufferMemory;
+
+	void* mappedData;
+
+	float r, theta, phi;
 
 public:
-    Camera(Device* device, float aspectRatio);
-    ~Camera();
+	Camera(Device* device, float aspectRatio);
+	~Camera();
 
-    VkBuffer GetBuffer() const;
-    
-    void UpdateOrbit(float deltaX, float deltaY, float deltaZ);
+	VkBuffer GetBuffer() const;
+
+	void UpdateOrbit(float deltaX, float deltaY, float deltaZ);
 };
