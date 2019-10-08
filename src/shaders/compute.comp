@@ -63,45 +63,85 @@ void main() {
 		 numBlades.vertexCount = 0;
 	}
 	barrier(); // Wait till all threads reach this point
-	numBlades.vertexCount = atomicAdd(numBlades.vertexCount, 1);
-	numBlades.instanceCount = 1;
-	numBlades.firstVertex = 0;
-	numBlades.firstInstance = 0;
+//	numBlades.vertexCount = atomicAdd(numBlades.vertexCount, 1);
+//	numBlades.instanceCount = 1;
+//	numBlades.firstVertex = 0;
+//	numBlades.firstInstance = 0;
 
-//	vec4 v0 = inputBlades[gl_GlobalInvocationID.x].v0;
-//	vec4 v1 = inputBlades[gl_GlobalInvocationID.x].v1;
-//	vec4 v2 = inputBlades[gl_GlobalInvocationID.x].v2;
-//	vec4 up = inputBlades[gl_GlobalInvocationID.x].up;
-//
-//	vec3 D = vec3(0.0, -1.0, 0.0);
-//	float gMag = 9.8;
-//	vec3 gE = normalize(D) * gMag;
-//	vec3 f = normalize(vec3(cos(v0.w), 0.f, sin(v0.w)));
-//	vec3 gF = (1.f/4.f) * length(gE) * f;
-//	vec3 g = gE + gF;
-//
-//	vec3 iv2 = v0.xyz + v1.w * up.xyz;
-//	vec3 r = (iv2 - v2.xyz) * up.w;
-//
-//	vec3 tv2 = (g + r) * deltaTime;
-//
-//	v2 += vec4(tv2, 0.f);
-//
-//	v2.xyz = v2.xyz - up.xyz * min(up.xyz * (v2.xyz - v0.xyz), 0.f);
-//
-//	float lproj = length(v2.xyz - v0.xyz - up.xyz * ((v2.xyz - v0.xyz) * up.xyz));
-//
-//	v1.xyz = v0.xyz + v1.w * up.xyz * max(1 - lproj/v1.w, 0.05 * max(lproj/v1.w, 1.f));
-//
-//	float L = (2 * length(v0.xyz) + (3 - 1) * length(v1.xyz)) / (3 + 1);
-//
-//	float rfloat = v1.w / L;
-//	inputBlades[gl_GlobalInvocationID.x].v1 = vec4(v0.xyz + r * (v1.xyz - v0.xyz), v1.w);
-//	inputBlades[gl_GlobalInvocationID.x].v2 = vec4(inputBlades[gl_GlobalInvocationID.x].v1.xyz + r * (v2.xyz - v1.xyz), v2.w);
+	vec4 currv0 = inputBlades[gl_GlobalInvocationID.x].v0;
+	vec4 currv1 = inputBlades[gl_GlobalInvocationID.x].v1;
+	vec4 currv2 = inputBlades[gl_GlobalInvocationID.x].v2;
+	vec4 currup = inputBlades[gl_GlobalInvocationID.x].up;
 
-	inputBlades[gl_GlobalInvocationID.x] = Blade(vec4(1.0), vec4(1.0), vec4(1.0), vec4(1.0));	
+	vec3 v0 = vec3(currv0);
+	vec3 v1 = vec3(currv1);
+	vec3 v2 = vec3(currv2);
+	vec3 up = vec3(currup);
+	float direction = currv0.w;
+	float height = currv1.w;
+	float width = currv2.w;
+	float stiffness = currup.w;
 
-	culledBlades[gl_GlobalInvocationID.x] = inputBlades[gl_GlobalInvocationID.x];
+
+	vec3 D = vec3(0.0, -1.0, 0.0);
+	float gMag = 9.8;
+	vec3 gE = normalize(D) * gMag;
+	vec3 f = normalize(vec3(cos(direction), 0.f, sin(direction)));
+	vec3 gF = (1.f/4.f) * length(gE) * f;
+	vec3 g = gE + gF;
+
+	vec3 iv2 = v0 + height * normalize(up);
+	vec3 r = (iv2 - v2) * stiffness;
+
+
+	vec3 wi = 20.f * vec3(sin((v0.x + 30.f) * 0.8 + totalTime / 1.2), 0.f, cos((v0.z + 2.5f) * 0.2 + totalTime / 2.5f)) + 
+	          23.f * vec3(cos(v0.z * 0.5 + totalTime / 1.5f + 5.0), 0.f, sin(v0.x * 0.3 + totalTime / 2.f));
+
+	float fd = 1.f - abs(dot(normalize(wi), normalize(v2 - v0)));
+	float fr = dot(v2 - v0, up) / height;
+	float theta = fd * fr;
+
+	vec3 w = wi * theta;
+
+	vec3 tv2 = (g + r + w) * deltaTime;
+
+	v2 += tv2;
+
+	v2 = v2 - up * min(up * (v2 - v0), 0.f);
+
+	float lproj = length(v2 - v0 - up * ((v2 - v0) * up));
+
+	v1 = v0 + height * up * max(1 - lproj/height, 0.05 * max(lproj/height, 1.f));
+
+	int n = 2;
+	float L0 = length(v2 - v0);
+	float L1 = length(v2 - v1) + length(v1 - v0); 
+	float L = (2 * L0 + (n - 1) * L1) / (n + 1);
+
+	float rfloat = height / L;
+	inputBlades[gl_GlobalInvocationID.x].v1 = vec4(v0 + rfloat * (v1 - v0), height);
+	inputBlades[gl_GlobalInvocationID.x].v2 = vec4(inputBlades[gl_GlobalInvocationID.x].v1.xyz + rfloat * (v2 - v1), width);
+
+
+	bool cullBlade = false;
+	vec3 dirc = f;
+	vec4 cameraPos = inverse(camera.view) * vec4(0, 0, 0, 1);
+	vec3 dirb = normalize(cameraPos.xyz - v0);
+	float orientationValue = abs(dot(dirc, dirb));
+	if (orientationValue > 0.93) {
+		cullBlade = true;
+	}
+
+
+//	culledBlades[gl_GlobalInvocationID.x] = inputBlades[gl_GlobalInvocationID.x];
+	barrier();
+	if (!cullBlade) {
+		uint index = atomicAdd(numBlades.vertexCount, 1);
+		culledBlades[index] = inputBlades[gl_GlobalInvocationID.x];
+//		atomicAdd(numBlades.vertexCount, 1);
+	} else {
+		atomicAdd(numBlades.vertexCount, 0);
+	}
 
 
     // TODO: Apply forces on every blade and update the vertices in the buffer

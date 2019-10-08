@@ -498,7 +498,7 @@ void Renderer::CreateComputeDescriptorSets() {
 
 		descriptorWrites[3 * i + 1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 		descriptorWrites[3 * i + 1].dstSet = computeDescriptorSets[i];
-		descriptorWrites[3 * i + 1].dstBinding = 0;
+		descriptorWrites[3 * i + 1].dstBinding = 1;
 		descriptorWrites[3 * i + 1].dstArrayElement = 0;
 		descriptorWrites[3 * i + 1].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
 		descriptorWrites[3 * i + 1].descriptorCount = 1;
@@ -515,7 +515,7 @@ void Renderer::CreateComputeDescriptorSets() {
 
 		descriptorWrites[3 * i + 2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 		descriptorWrites[3 * i + 2].dstSet = computeDescriptorSets[i];
-		descriptorWrites[3 * i + 2].dstBinding = 0;
+		descriptorWrites[3 * i + 2].dstBinding = 2;
 		descriptorWrites[3 * i + 2].dstArrayElement = 0;
 		descriptorWrites[3 * i + 2].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
 		descriptorWrites[3 * i + 2].descriptorCount = 1;
@@ -1054,9 +1054,7 @@ void Renderer::RecordComputeCommandBuffer() {
 		vkCmdBindDescriptorSets(computeCommandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, computePipelineLayout, 2 + i, 1, &computeDescriptorSets[i], 0, nullptr);
 	}
 
-
-
-	vkCmdDispatch(computeCommandBuffer, NUM_BLADES, 1, 1);
+	vkCmdDispatch(computeCommandBuffer, NUM_BLADES * sizeof(Blade), 1, 1);
 
 
 
