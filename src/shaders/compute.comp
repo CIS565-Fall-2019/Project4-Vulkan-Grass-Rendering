@@ -63,10 +63,6 @@ void main() {
 		 numBlades.vertexCount = 0;
 	}
 	barrier(); // Wait till all threads reach this point
-//	numBlades.vertexCount = atomicAdd(numBlades.vertexCount, 1);
-//	numBlades.instanceCount = 1;
-//	numBlades.firstVertex = 0;
-//	numBlades.firstInstance = 0;
 
 	vec4 currv0 = inputBlades[gl_GlobalInvocationID.x].v0;
 	vec4 currv1 = inputBlades[gl_GlobalInvocationID.x].v1;
@@ -128,19 +124,38 @@ void main() {
 	vec4 cameraPos = inverse(camera.view) * vec4(0, 0, 0, 1);
 	vec3 dirb = normalize(cameraPos.xyz - v0);
 	float orientationValue = abs(dot(dirc, dirb));
-	if (orientationValue > 0.93) {
+	if (orientationValue > 0.96) {
+		cullBlade = true;
+	}
+
+	float tolerance = 0.05;
+	vec3 m = (1.f/4.f) * v0 + (1.f/2.f) * v1 * (1.f/4.f) * v2;
+
+	vec4 v0Prime = camera.proj * camera.view * vec4(v0, 1.f);
+	float hv0 = v0Prime.w + tolerance;
+	bool vv0 = (v0Prime.x >= -hv0) && (v0Prime.x <= hv0) && 
+			   (v0Prime.y >= -hv0) && (v0Prime.y <= hv0) && 
+			   (v0Prime.z >= 0.f) && (v0Prime.z <= hv0);
+
+
+    vec4 mPrime = camera.proj * camera.view * vec4(m, 1.f);
+	float hm = mPrime.w + tolerance;
+	bool vm = (mPrime.x >= -hm) && (mPrime.x <= hm) && 
+			  (mPrime.y >= -hm) && (mPrime.y <= hm) && 
+			  (mPrime.z >= 0.f) && (mPrime.z <= hm);
+
+	vec4 v2Prime = camera.proj * camera.view * vec4(v2, 1.f);
+	float hv2 = v2Prime.w + tolerance;
+	bool vv2 = (v2Prime.x >= -hv2) && (v2Prime.x <= hv2) && 
+			   (v2Prime.y >= -hv2) && (v2Prime.y <= hv2) && 
+			   (v2Prime.z >= 0.f) && (v2Prime.z <= hv2);
+	if (!vv0 && !vm && !vv2) {
 		cullBlade = true;
 	}
 
 
-//	culledBlades[gl_GlobalInvocationID.x] = inputBlades[gl_GlobalInvocationID.x];
-	barrier();
 	if (!cullBlade) {
-		uint index = atomicAdd(numBlades.vertexCount, 1);
-		culledBlades[index] = inputBlades[gl_GlobalInvocationID.x];
-//		atomicAdd(numBlades.vertexCount, 1);
-	} else {
-		atomicAdd(numBlades.vertexCount, 0);
+		culledBlades[atomicAdd(numBlades.vertexCount, 1)] = inputBlades[gl_GlobalInvocationID.x];
 	}
 
 
