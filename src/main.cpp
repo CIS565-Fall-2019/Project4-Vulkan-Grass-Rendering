@@ -12,6 +12,7 @@ Renderer* renderer;
 Camera* camera;
 
 namespace {
+	//cal back for the resize of the window
     void resizeCallback(GLFWwindow* window, int width, int height) {
         if (width == 0 || height == 0) return;
 
@@ -25,6 +26,7 @@ namespace {
     double previousX = 0.0;
     double previousY = 0.0;
 
+	//call back for the mouse down
     void mouseDownCallback(GLFWwindow* window, int button, int action, int mods) {
         if (button == GLFW_MOUSE_BUTTON_LEFT) {
             if (action == GLFW_PRESS) {
@@ -67,7 +69,7 @@ namespace {
 
 int main() {
     static constexpr char* applicationName = "Vulkan Grass Rendering";
-    InitializeWindow(640, 480, applicationName);
+    InitializeWindow(1280, 720, applicationName);
 
     unsigned int glfwExtensionCount = 0;
     const char** glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
