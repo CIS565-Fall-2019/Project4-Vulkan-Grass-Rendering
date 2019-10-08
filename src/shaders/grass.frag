@@ -1,7 +1,6 @@
 #version 450
 #extension GL_ARB_separate_shader_objects : enable
 
-
 layout(set = 0, binding = 0) uniform CameraBufferObject {
     mat4 view;
     mat4 proj;
@@ -26,8 +25,7 @@ void main() {
 	vec3 green3 = vec3(200.0, 203.0, 111.0) * over255;
 
 	vec3 color = mix(mix(green1, green2, in_uv.y), mix(green2, green3, in_uv.y), in_uv.y);
-
-
+	
 	// lambertian shading
 	//float diffuse = clamp(abs(dot(normalize(in_nor), normalize(in_lightDir))), 0.0, 1.0);
 	//float diffuse = clamp(dot(normalize(in_nor), normalize(in_lightDir)), 0.0, 1.0);
