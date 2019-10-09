@@ -143,12 +143,20 @@ Some blades are angled in such a way that they appear very thin in camera. If th
 
 ![](img/OrientationCulling.PNG)
 
+The following illustrates orientation culling using an extreme threshold to make the effect visible. Only blades that are very strongly facing the camera will remain unculled:
+
+![](img/OrientationCullingVideo.gif)
+
 #### Frustum
 Not all blades are within sight of the camera at all times. There is no need to render blades that the camera cannot see, so we can cull these blades. To do this, we check the visibility of three points on the blade, `v0`, `v2`, and `m`, which is a midpoint on the curve calculated as `m = (1/4)v0 + (1/2)v1 + (1/4)v2`. If all three points are not visible, then we can cull the blade.
 
 To determine if a point is visible on camera, we project it into screen space and see if it falls within the bounds of the screen, with a small tolerance, as we want some buffer area around the screen to prevent seeing the blades disappear as the move off screen, as the curve may be off screen, but the blades have width, so their geometry might still be on screen.
 
 ![](img/FrustumCulling.PNG)
+
+The following illustrates frustum culling with a negative tolerance, culling blades that fall just within the frustum in order to make the effect visible. Important to notice is that the blades at and behind the far clip plane are being culled, so as the camera moves in and out, the cutoff line changes.  Also notice that at the edges, we can see blades flicker in and out of the screen, as they get culled when they move too far out.
+
+![](img/FrustumCullingVideo.gif)
 
 #### Distance
 Like with orientation culling, if a blade is very far fromm the camera, it may appear very small on screen, causing rendering artifacts. To reduce these artifacts, we cull blades based on their distance from camera. Rather than a sharp cutoff where blades go from being rendered to being culled a certain distance, we step the culling gradually in regions. We define a maximum distance and a number of regions. As the regions get further from camera, we cull increasingly more of the blades in that region. In the first region, no blades are culled, and in the last region all blades are culled, giving a smooth transition of blade density as we move farther from camera.
@@ -160,6 +168,10 @@ Distance from camera is calculated as follows:
 Culling is determined according to this distance and the defined regions:
 
 ![](img/DistanceCulling.PNG)
+
+The following illustrates distance culling with extreme, quick density falloff to see the effect. The maximum distance is 50, so the blade density drops fairly close to camera, and there are 10 groups to illustrate the regions of density falloff:
+
+![](img/DistanceCullingVideo.gif)
 
 ## Performance Analysis
 
