@@ -114,29 +114,31 @@ We next need to see how the wind affects the blade based on its the blade's orie
 ![](img/FinalWindForce.PNG)
 
 ### Culling
+There are many blades of grass that we in fact do not have to render due to various reasons. We still must apply physics to all blades, as the physics may move an unrendered blade into a state where it must be rendered, but we can cut down the cost of rendering many blades using the following culling techniques.
+
 #### Orientation
+Some blades are angled in such a way that they appear very thin in camera. If the line of sight from the camera to that blade is perpendicular or nearly perpendicular to the front facing direction of the blade, the blade will appear as a very thing line. We can cull these blades, as they are nearly invisible. In addition to adding efficiency, this culling will reduce some flickering on screen. The thin blades may be smaller than a single pixel width, cuasing flickering as the line of the blade's edge flickers in and out of view. As few to none of the blades will be perfectly perpendicular to the camera view direction, we use a threshold to cull out these blades. The culling process looks like the following, where dirc is the front facing direction of the blade and dirb is the direction from the camera to the blade:
+
+![](img/OrientationCulling.PNG)
+
 #### Frustum
 #### Distance
 ## Performance Analysis
+
+
 ## Bloopers
+In the process of trying to get the blades to render, I was indexing into the input arrays in the tessellation evaluation shader incorrectly. This caused all of my blades of grass to render as one single blade.
 
+![](img/singleBlade.PNG)
 
+In fixing this same error, I lowered the number of blades to see what was happening, and got this image:
 
+![](TesselationIndexingBlooper.PNG)
 
+Another error that produced an interesting result was accidentally using the length of `v0` in my force application.  This caused very large forces to be applied when `v0` was very close to the origin, giving this image:
 
-### Culling tests
+![](img/TallCentralGrass.PNG)
 
-Although we need to simulate forces on every grass blade at every frame, there are many blades that we won't need to render
-due to a variety of reasons. Here are some heuristics we can use to cull blades that won't contribute positively to a given frame.
-
-#### Orientation culling
-
-Consider the scenario in which the front face direction of the grass blade is perpendicular to the view vector. Since our grass blades
-won't have width, we will end up trying to render parts of the grass that are actually smaller than the size of a pixel. This could
-lead to aliasing artifacts.
-
-In order to remedy this, we can cull these blades! Simply do a dot product test to see if the view vector and front face direction of
-the blade are perpendicular. The paper uses a threshold value of `0.9` to cull, but feel free to use what you think looks best.
 
 #### View-frustum culling
 
