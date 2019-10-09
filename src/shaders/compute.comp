@@ -23,18 +23,24 @@ struct Blade {
 
 // TODO: Add bindings to:
 // 1. Store the input blades
+layout(set = 2, binding = 0) buffer inputBlades {
+	Blade[] b;
+};
 // 2. Write out the culled blades
+layout(set = 2, binding = 1) buffer culledBlades {
+	Blade[] c;
+};
 // 3. Write the total number of blades remaining
 
 // The project is using vkCmdDrawIndirect to use a buffer as the arguments for a draw call
 // This is sort of an advanced feature so we've showed you what this buffer should look like
 //
-// layout(set = ???, binding = ???) buffer NumBlades {
-// 	  uint vertexCount;   // Write the number of blades remaining here
-// 	  uint instanceCount; // = 1
-// 	  uint firstVertex;   // = 0
-// 	  uint firstInstance; // = 0
-// } numBlades;
+ layout(set = 2, binding = 2) buffer NumBlades {
+ 	  uint vertexCount;   // Write the number of blades remaining here
+ 	  uint instanceCount; // = 1
+ 	  uint firstVertex;   // = 0
+ 	  uint firstInstance; // = 0
+ } numBlades;
 
 bool inBounds(float value, float bounds) {
     return (value >= -bounds) && (value <= bounds);
@@ -53,4 +59,6 @@ void main() {
 	// to the culled blades buffer
 	// Note: to do this, you will need to use an atomic operation to read and update numBlades.vertexCount
 	// You want to write the visible blades to the buffer without write conflicts between threads
+	c[gl_GlobalInvocationID.x] = b[gl_GlobalInvocationID.x];
+	atomicAdd(numBlades.vertexCount, 1);
 }
