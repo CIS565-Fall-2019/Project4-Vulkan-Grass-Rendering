@@ -2,6 +2,7 @@
 
 #include <glm/glm.hpp>
 #include <chrono>
+#include <iostream>
 
 #include "Model.h"
 #include "Blades.h"

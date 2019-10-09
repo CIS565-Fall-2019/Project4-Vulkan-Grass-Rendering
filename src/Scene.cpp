@@ -31,6 +31,9 @@ void Scene::UpdateTime() {
     time.deltaTime = nextDeltaTime.count();
     time.totalTime += time.deltaTime;
 
+    //print out the delta time
+    //std::cout << time.deltaTime << std::endl;
+
     memcpy(mappedData, &time, sizeof(Time));
 }
 

@@ -196,6 +196,7 @@ void SwapChain::Recreate() {
 bool SwapChain::Acquire() {
     if (ENABLE_VALIDATION) {
         // the validation layer implementation expects the application to explicitly synchronize with the GPU
+        // without this synchronization, the queue will be filled up slowly and cause problem
         vkQueueWaitIdle(device->GetQueue(QueueFlags::Present));
     }
     VkResult result = vkAcquireNextImageKHR(device->GetVkDevice(), vkSwapChain, std::numeric_limits<uint64_t>::max(), imageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex);

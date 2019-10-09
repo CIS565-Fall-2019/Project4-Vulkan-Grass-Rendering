@@ -28,6 +28,7 @@ Blades::Blades(Device* device, VkCommandPool commandPool, float planeDim) : Mode
         currentBlade.v1 = glm::vec4(bladePosition + bladeUp * height, height);
 
         // Physical model guide and width (v2)
+        // v2 is the same as v1 at the beginning
         float width = MIN_WIDTH + (generateRandomFloat() * (MAX_WIDTH - MIN_WIDTH));
         currentBlade.v2 = glm::vec4(bladePosition + bladeUp * height, width);
 
@@ -44,9 +45,10 @@ Blades::Blades(Device* device, VkCommandPool commandPool, float planeDim) : Mode
     indirectDraw.firstVertex = 0;
     indirectDraw.firstInstance = 0;
 
-    BufferUtils::CreateBufferFromData(device, commandPool, blades.data(), NUM_BLADES * sizeof(Blade), VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, bladesBuffer, bladesBufferMemory);
+    //need to modify to eliminate the error shown in console
+    BufferUtils::CreateBufferFromData(device, commandPool, blades.data(), NUM_BLADES * sizeof(Blade), VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, bladesBuffer, bladesBufferMemory);
     BufferUtils::CreateBuffer(device, NUM_BLADES * sizeof(Blade), VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, culledBladesBuffer, culledBladesBufferMemory);
-    BufferUtils::CreateBufferFromData(device, commandPool, &indirectDraw, sizeof(BladeDrawIndirect), VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT, numBladesBuffer, numBladesBufferMemory);
+    BufferUtils::CreateBufferFromData(device, commandPool, &indirectDraw, sizeof(BladeDrawIndirect), VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, numBladesBuffer, numBladesBufferMemory);
 }
 
 VkBuffer Blades::GetBladesBuffer() const {

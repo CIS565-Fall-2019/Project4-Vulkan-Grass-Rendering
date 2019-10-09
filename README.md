@@ -275,8 +275,29 @@ The following resources may be useful for this project.
 ## README
 
 * A brief description of the project and the specific features you implemented.
+  * In this project, I implemented the grass representation using tessellation based on next-gen graphics API Vulkan. The tessellation level is based on the distance from the camera to the grass blade. 
+  * Besides the basic grass shading, I also let natural force applying on the grass following the paper "[Responsive Real-Time Grass Rendering for General 3D Scenes](https://www.cg.tuwien.ac.at/research/publications/2017/JAHRMANN-2017-RRTG/JAHRMANN-2017-RRTG-draft.pdf)". There are three natural forces I added here: gravity, recovery and wind force.  
+  * Furthermore, in order to optimize the performance of grass rendering. I added three culling methods on the scene: orientation culling, view-frustum culling and distance culling.
+    * orientation culling is based on angle between the direction of the width of the blade and the camera orientation. If they align too much, the blade might not be able to fill the whole pixel, causing rendering problems
+    * view-frustum culling is based on the idea that if we can't see it, we don't need to draw it. Hence, we check whether the v0(origin of blade), v2(blade tip) and m(mass center of blade) are inside the view-frustum. If not, we cull it out.
+    * distance culling is based on the idea that if the distance is too far away, we can't see that many blades in the same area very detailed far away from the camera. So cull some of the baldes to improve the performance.
 * GIFs of your project in its different stages with the different features being added incrementally.
-* A performance analysis (described below).
+  * without any force and culling
+    * ![](img/grass_without_force.PNG)
+  * With gravity
+    * ![](img/grass_with_gravity.PNG)
+  * With wind force and recovery force
+    * ![](img/grass_with_wind.gif)
+  * With view-frustum culling and orientation culling (notice the boundary of window)
+    * ![](img/frustum_culling.gif)
+  * With distance culling
+    * ![](img/distance_cull.gif)
+* A performance analysis.
+  * Time R.S.T then number of blades
+    * ![](img/blade_num_chart.png)
+  * culling efficiency
+    * ![](img/culling_method_efficiency.png)
+    * From the chart above we can easily see the performance improvement by applying the culling methods. Among them, the distance culling improve the performance most. The frustum culling has a better result when the camera is looking at the corner of the ground.
 
 ### Performance Analysis
 
@@ -300,3 +321,16 @@ The template of the comment section of your pull request is attached below, you 
     * Feature 1
     * ...
 * Feedback on the project itself, if any.
+
+
+
+### Acknowledgements
+
+-  [Responsive Real-Time Grass Rendering for General 3D Scenes](https://www.cg.tuwien.ac.at/research/publications/2017/JAHRMANN-2017-RRTG/JAHRMANN-2017-RRTG-draft.pdf)
+-  [Vulkan Tutorial](https://vulkan-tutorial.com/)
+- [Project 4 Recitation Slides](https://docs.google.com/presentation/d/1WqIPLlli2l5A2QfgPOl1cqqkvSRPjiid9OYzSlkAWxM/edit#slide=id.g25e0d401a4_0_90)
+- [Introduction to Vulkan](https://docs.google.com/presentation/d/1zTqdnUV5hGuff6mPutvc9ZOzHJAPbdm4OzkYXTIZTSE/edit#slide=id.p)
+- [Tessellation Tutorial](http://in2gpu.com/2014/07/12/tessellation-tutorial-opengl-4-3/)
+- Hannah and Josh for helped me build up the compute pipeline
+- Yan Dong helped me a lot when I implemented the grass fragment shader as well as debug the compute pipeline and compute shader
+- Jie Meng helped me figure out the dynamic tessellation level based on distance to camera
