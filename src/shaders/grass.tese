@@ -25,6 +25,7 @@ void main() {
 	//output positions for each vertex of the grass blade
 	//For quads, we use standard bilinear interpolation to determine the position
 	vec3 v0 = gl_in[0].gl_Position.xyz;
+	//vec3 v0 = se_v0.xyz;
 	vec3 v1 = se_v1.xyz;
 	vec3 v2 = se_v2.xyz;
 

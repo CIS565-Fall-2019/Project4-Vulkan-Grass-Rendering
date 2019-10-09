@@ -12,7 +12,7 @@ layout(location = 0) in vec3 fs_nor;
 layout(location = 0) out vec4 outColor;
 
 //eye: glm::vec3(0.0f, 1.0f, 10.0f) target: glm::vec3(0.0f, 1.0f, 0.0f)
-vec3 fs_LightVec = vec3(-1.0, 1.0, 0.0);
+vec3 fs_LightVec = vec3(-1.0, 0.3, 0.0);
 vec3 baseCol = vec3(99.0, 242.0, 34.0) /255.;
 
 void main() {

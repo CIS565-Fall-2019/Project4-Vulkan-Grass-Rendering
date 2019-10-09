@@ -65,9 +65,10 @@ void main() {
 	}
 	barrier(); // Wait till all threads reach this point
 
+
     // TODO: Apply forces on every blade and update the vertices in the buffer
 	//get the stored data
-	uint ind = gl_GlobalInvocationID.x.x;
+	uint ind = gl_GlobalInvocationID.x;
 	Blade B = input_b[ind];
 	vec3 v0 = B.v0.xyz;
 	float ori = B.v0.w;
@@ -92,11 +93,11 @@ void main() {
 	vec3 r = (iv2 - v2) * stif;
 
 	//wind
-	float windf = sin(0.05 * timer.totalTime);
-	float windf2 = cos(2.0 * v0.x * timer.totalTime);
-	float windf3 = cos(3.0 * v0.z * timer.totalTime);
-	vec3 winddir = vec3(windf, windf2, windf3);
-	float fr = dot((v2-v0), up) / hei;
+	float windf = sin(0.1 * timer.totalTime);
+	float windf2 = cos(0.8 * v0.x * timer.totalTime);
+	float windf3 = cos(1.5 * v0.z * timer.totalTime);
+	vec3 winddir = 0.5 * vec3(windf, 0, windf2);
+	float fr = dot((v2 - v0), up) / hei;
 	float fd = 1.0 - abs(dot(normalize(winddir), normalize(v2 - v0)));  
 	float windalig = fd * fr;
 	vec3 w = winddir * windalig;
@@ -123,7 +124,6 @@ void main() {
 	//set new data
 	input_b[ind].v1.xyz = newv1;
 	input_b[ind].v2.xyz = newv2;
-
 
 	// TODO: Cull blades that are too far away or not in the camera frustum and write them
 	// to the culled blades buffer

@@ -250,7 +250,7 @@ void Renderer::CreateDescriptorPool() {
 
 		// TODO: Add any additional types and counts of descriptors you will need to allocate
 		//Bldes compute
-		{VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, static_cast<uint32_t>(3 * scene->GetBlades().size()) },
+		{VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, static_cast<uint32_t>(3 * scene->GetBlades().size())},
 	};
 
 	VkDescriptorPoolCreateInfo poolInfo = {};
@@ -457,7 +457,7 @@ void Renderer::CreateComputeDescriptorSets() {
 		VkDescriptorBufferInfo grassBufferInfo = {};
 		grassBufferInfo.buffer = scene->GetBlades()[i]->GetBladesBuffer();
 		grassBufferInfo.offset = 0;
-		grassBufferInfo.range = NUM_BLADES * sizeof(Blade);
+		grassBufferInfo.range = NUM_BLADES * sizeof(Blade);//???
 
 		/*descriptorWrites[2 * i + 0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 		descriptorWrites[2 * i + 0].dstSet = modelDescriptorSets[i];
@@ -834,8 +834,8 @@ void Renderer::CreateGrassPipeline() {
 	VkPipelineTessellationStateCreateInfo tessellationInfo = {};
 	tessellationInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_TESSELLATION_STATE_CREATE_INFO;
 	tessellationInfo.pNext = NULL;
-	tessellationInfo.flags = 0;
-	tessellationInfo.patchControlPoints = 1;
+	tessellationInfo.flags = 0;//flags is reserved for future use.-.-
+	tessellationInfo.patchControlPoints = 1;//cp number for each patch
 
 	// --- Create graphics pipeline ---
 	VkGraphicsPipelineCreateInfo pipelineInfo = {};
@@ -1048,8 +1048,9 @@ void Renderer::RecordComputeCommandBuffer() {
 
 	// TODO: For each group of blades bind its descriptor set and dispatch
 	for (uint32_t i = 0; i < scene->GetBlades().size(); ++i) {
-		vkCmdBindDescriptorSets(computeCommandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, computePipelineLayout, 2, 1, &computeDescriptorSets[i], 0, nullptr);
-		vkCmdDispatch(computeCommandBuffer, NUM_BLADES / WORKGROUP_SIZE, 1, 1);
+		vkCmdBindDescriptorSets(computeCommandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, 
+			computePipelineLayout, 2, 1, &computeDescriptorSets[i], 0, nullptr);
+		vkCmdDispatch(computeCommandBuffer, (int)(NUM_BLADES / WORKGROUP_SIZE + 1), 1, 1);
 	}
 
 	// ~ End recording ~
