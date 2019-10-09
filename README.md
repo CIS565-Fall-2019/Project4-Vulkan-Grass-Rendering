@@ -53,7 +53,15 @@ Finally, this position is projected into screen space with the view projection m
 
 The last step of the blade rendering is the fragment shader. This shader applies a gradient to the blades, making them dark green at their base and light green at the tips. This shading uses the height at the current portion of the blade. This height is a mix between the world space height and the individual blade space height. The world space height ensures that parts of the blades at the same height will have similar luminance. The blade space height ensures that even shorter blades still have some light green at their tips. The mixing of these two height spaces gives a more natural, varied look to the grass. 
 
+Simply rendering the blades of grass gives the following results:
+
+Quadratic Blades             |  Triangular Blades          
+:-------------------------:|:-------------------------:
+![](img/StillBlades.PNG)| ![](img/TriangleBlades.PNG)
+
 I initially tried using lambertian shading based on the angle of the blade of grass, but this caused the color distrubition to be too varied. Because each blade is a flat plane, the orientation dramatically affects the lighting on it, causing all blades to have different tones of green, which does not look realistic. 
+
+![](img/LambertianShading.PNG)
 
 ### Physics
 The process of applying physics to the blades of grass involves calculating all forces that act upon the blades, and then updating the Bezier control points according to these forces. We are applying forces onto the third control point, `v2`, however there are measures we must take to ensure that when we apply the forces, we maintain certain properties: the blade must not fall through the ground plane, the length of the curved blade must be the same as the height of the blade to preserve length, and `v1` must be updated in relation to `v2`. 
@@ -97,6 +105,11 @@ Finally, the total force of gravity is the sum of the environmental gravity and 
 ```
 GravityForce = GravityEnvironmental + GravityFront
 ```
+
+With just gravity applied, the blades fall to the ground:
+
+![](img/gravityOnly.gif)
+
 #### Recovery
 Blades of grass have some elastic stiffness to them, allowing them to remain mostly upright even in the presence of gravity. To represent this, we add a recovery force to counter the gravitational force. We use Hooke's law to simulate this.
 
@@ -104,6 +117,11 @@ The recovery force is found by comparing the current position of `v2`, the third
 ```
 r = (iv2 - v2) * BladeStiffness.
 ```
+
+With gravity and recovery only, the blades reach a state of equilibrium and do not move from this position:
+
+![](img/GravityAndRecovery.PNG)
+
 #### Wind
 The final force is the wind force. The wind force on each blade is determined by a function of the position of the base of each blade, wi(v0). This function defines the direction and strength of the wind at each point in space. For my wind functions, I used combinations of sinusoidal function and Fractal Brownian Motion noise. The noise breaks up some of the sinusoidal patterns in the wind.  
 
@@ -112,6 +130,10 @@ We next need to see how the wind affects the blade based on its the blade's orie
 ![](img/WindCalculations.PNG)
 
 ![](img/FinalWindForce.PNG)
+
+With a light wind distribution purely based on and FBM noise function, the result of all three forces combined looks as follows:
+
+![](img/AllForces.gif)
 
 ### Culling
 There are many blades of grass that we in fact do not have to render due to various reasons. We still must apply physics to all blades, as the physics may move an unrendered blade into a state where it must be rendered, but we can cut down the cost of rendering many blades using the following culling techniques.
