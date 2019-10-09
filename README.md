@@ -133,7 +133,7 @@ In the process of trying to get the blades to render, I was indexing into the in
 
 In fixing this same error, I lowered the number of blades to see what was happening, and got this image:
 
-![](TesselationIndexingBlooper.PNG)
+![](img/TesselationIndexingBlooper.PNG)
 
 Another error that produced an interesting result was accidentally using the length of `v0` in my force application.  This caused very large forces to be applied when `v0` was very close to the origin, giving this image:
 
