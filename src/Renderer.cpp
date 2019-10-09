@@ -249,14 +249,8 @@ void Renderer::CreateDescriptorPool() {
         // Time (compute)
         { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER , 1 },
 
-        // Input Blades
-        { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER , static_cast<uint32_t>(scene->GetBlades().size()) },
-
-        // Culled Blades
-        { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER , static_cast<uint32_t>(scene->GetBlades().size()) },
-
-        // Num Blades
-        { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER , static_cast<uint32_t>(scene->GetBlades().size()) },
+        // Blades
+        { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER , 3 * static_cast<uint32_t>(scene->GetBlades().size()) },
     };
 
     VkDescriptorPoolCreateInfo poolInfo = {};
@@ -458,12 +452,12 @@ void Renderer::CreateComputeDescriptorSets() {
         VkDescriptorBufferInfo computeInputBufferInfo = {};
         computeInputBufferInfo.buffer = scene->GetBlades()[i]->GetBladesBuffer();
         computeInputBufferInfo.offset = 0;
-        computeInputBufferInfo.range = sizeof(Blade) * scene->GetBlades().size();
+        computeInputBufferInfo.range = sizeof(Blade) * NUM_BLADES;
 
         VkDescriptorBufferInfo computeCulledBufferInfo = {};
         computeCulledBufferInfo.buffer = scene->GetBlades()[i]->GetCulledBladesBuffer();
         computeCulledBufferInfo.offset = 0;
-        computeCulledBufferInfo.range = sizeof(Blade) * scene->GetBlades().size();
+        computeCulledBufferInfo.range = sizeof(Blade) * NUM_BLADES;
 
         VkDescriptorBufferInfo computeIndirectBufferInfo = {};
         computeIndirectBufferInfo.buffer = scene->GetBlades()[i]->GetNumBladesBuffer();
@@ -1029,9 +1023,8 @@ void Renderer::RecordComputeCommandBuffer() {
     for (int b = 0; b < computeDescriptorSets.size(); ++b)
     {
         vkCmdBindDescriptorSets(computeCommandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, computePipelineLayout, 2, 1, &computeDescriptorSets[b], 0, nullptr);
-        vkCmdDispatch(computeCommandBuffer, NUM_BLADES / WORKGROUP_SIZE, 1, 1);
+        vkCmdDispatch(computeCommandBuffer, ceil(float(NUM_BLADES) / float(WORKGROUP_SIZE)), 1, 1);
     }
-    
 
     // ~ End recording ~
     if (vkEndCommandBuffer(computeCommandBuffer) != VK_SUCCESS) {
@@ -1126,7 +1119,7 @@ void Renderer::RecordCommandBuffers() {
             vkCmdBindVertexBuffers(commandBuffers[i], 0, 1, vertexBuffers, offsets);
 
             // Bind the descriptor set for each grass blades model
-            vkCmdBindDescriptorSets(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, grassPipelineLayout, 1, 1, &grassDescriptorSets[j], 0, nullptr);
+            vkCmdBindDescriptorSets(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipelineLayout, 1, 1, &grassDescriptorSets[j], 0, nullptr);
 
             // Draw
             vkCmdDrawIndirect(commandBuffers[i], scene->GetBlades()[j]->GetNumBladesBuffer(), 0, 1, sizeof(BladeDrawIndirect));

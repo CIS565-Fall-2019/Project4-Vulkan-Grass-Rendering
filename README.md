@@ -1,3 +1,12 @@
+**University of Pennsylvania, CIS 565: GPU Programming and Architecture,
+Project 4 - Vulkan Grass Rendering**
+
+* Tabatha Hickman
+  * LinkedIn: https://www.linkedin.com/in/tabatha-hickman-335987140/
+* Tested on: Windows 10 Pro, i7-5600U CPU @ 2.60GHz 16GB, GeForce 840M (personal computer)
+
+![](img/withWind.gif)
+
 Instructions - Vulkan Grass Rendering
 ========================
 

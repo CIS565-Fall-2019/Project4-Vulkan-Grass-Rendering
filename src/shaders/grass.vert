@@ -23,13 +23,13 @@ out gl_PerVertex {
 };
 
 void main() {
-	// TODO: Write gl_Position and any other shader outputs
+	// Write gl_Position and any other shader outputs
 	ov0 = iv0;
 	ov1 = iv1;
 	ov2 = iv2;
 	oup = iup;
 	
 	vec4 outPos = iv0;
-	outPos.w = 1.0f;
+	outPos.w = 1.0;
 	gl_Position = outPos;
 }
