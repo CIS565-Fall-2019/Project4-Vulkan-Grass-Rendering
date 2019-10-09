@@ -156,17 +156,9 @@ Another error that produced an interesting result was accidentally using the len
 ![](img/TallCentralGrass.PNG)
 
 
-#### Distance culling
 
-Similarly to orientation culling, we can end up with grass blades that at large distances are smaller than the size of a pixel. This could lead to additional
-artifacts in our renders. In this case, we can cull grass blades as a function of their distance from the camera.
 
-You are free to define two parameters here.
-* A max distance afterwhich all grass blades will be culled.
-* A number of buckets to place grass blades between the camera and max distance into.
 
-Define a function such that the grass blades in the bucket closest to the camera are kept while an increasing number of grass blades
-are culled with each farther bucket.
 
 
 ### Tessellating Bezier curves into grass blades
