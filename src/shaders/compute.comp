@@ -171,7 +171,7 @@ void main() {
 	vec3 dirb = normalize(cameraPos.xyz - v0);
 	float orientationValue = abs(dot(dirc, dirb));
 	if (orientationValue > 0.95) {
-//		cullBlade = true;
+		cullBlade = true;
 	}
 
 	float tolerance = 0.2;
@@ -196,7 +196,7 @@ void main() {
 			   (v2Prime.y >= -hv2) && (v2Prime.y <= hv2) && 
 			   (v2Prime.z >= -hv2) && (v2Prime.z <= hv2);
 	if (!vv0 && !vm && !vv2) {
-//		cullBlade = true;
+		cullBlade = true;
 	}
 	
 	float dproj = length(v0 - cameraPos.xyz - up * dot(v0 - cameraPos.xyz, up));
@@ -205,7 +205,7 @@ void main() {
 	for (int i = 0; i < numIntervals; ++i) {
 		uint modVal = gl_GlobalInvocationID.x - i * (gl_GlobalInvocationID.x / i);
 		if (modVal < floor(i * ((dproj / dmax)))) {
-//			cullBlade = true;
+			cullBlade = true;
 		}
 	}
 
