@@ -5,6 +5,7 @@
 #include "Camera.h"
 #include "Scene.h"
 #include "Image.h"
+#include <iostream>
 
 Device* device;
 SwapChain* swapChain;
@@ -106,7 +107,7 @@ int main() {
     VkDeviceMemory grassImageMemory;
     Image::FromFile(device,
         transferCommandPool,
-        "images/grass.jpg",
+        "images/dirt.jpg",
         VK_FORMAT_R8G8B8A8_UNORM,
         VK_IMAGE_TILING_OPTIMAL,
         VK_IMAGE_USAGE_SAMPLED_BIT,
@@ -146,7 +147,10 @@ int main() {
     while (!ShouldQuit()) {
         glfwPollEvents();
         scene->UpdateTime();
+		double previousTime = glfwGetTime();
         renderer->Frame();
+		double currentTime = glfwGetTime();
+		std::cout << currentTime - previousTime << std::endl;
     }
 
     vkDeviceWaitIdle(device->GetVkDevice());

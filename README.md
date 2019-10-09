@@ -1,255 +1,18 @@
-Instructions - Vulkan Grass Rendering
-========================
-
-This is due **Wednesday 10/9, evening at midnight**.
-
-**QUICK NOTE**: Please use `git clone --recursive` when cloning this repo as there are submodules which need to be cloned as well.
-
-**Summary:**
-In this project, you will use Vulkan to implement a grass simulator and renderer. You will
-use compute shaders to perform physics calculations on Bezier curves that represent individual
-grass blades in your application. Since rendering every grass blade on every frame will is fairly
-inefficient, you will also use compute shaders to cull grass blades that don't contribute to a given frame.
-The remaining blades will be passed to a graphics pipeline, in which you will write several shaders.
-You will write a vertex shader to transform Bezier control points, tessellation shaders to dynamically create
-the grass geometry from the Bezier curves, and a fragment shader to shade the grass blades.
-
-The base code provided includes all of the basic Vulkan setup, including a compute pipeline that will run your compute
-shaders and two graphics pipelines, one for rendering the geometry that grass will be placed on and the other for 
-rendering the grass itself. Your job will be to write the shaders for the grass graphics pipeline and the compute pipeline, 
-as well as binding any resources (descriptors) you may need to accomplish the tasks described in this assignment.
-
-![](img/grass.gif) ![](img/grass2.gif)
-
-You are not required to use this base code if you don't want
-to. You may also change any part of the base code as you please.
-**This is YOUR project.** The above .gifs are just examples that you
-can use as a reference to compare to. Feel free to get creative with your implementations!
-
-**Important:**
-- If you are not in CGGT/DMD, you may replace this project with a GPU compute
-project. You MUST get this pre-approved by Shehzan or one of the TAs before continuing!
-
-### Contents
-
-* `src/` C++/Vulkan source files.
-  * `shaders/` glsl shader source files
-  * `images/` images used as textures within graphics pipelines
-* `external/` Includes and static libraries for 3rd party libraries.
-* `img/` Screenshots and images to use in your READMEs
-
-### Installing Vulkan
-
-In order to run a Vulkan project, you first need to download and install the [Vulkan SDK](https://vulkan.lunarg.com/).
-Make sure to run the downloaded installed as administrator so that the installer can set the appropriate environment
-variables for you.
-
-Once you have done this, you need to make sure your GPU driver supports Vulkan. Download and install a 
-[Vulkan driver](https://developer.nvidia.com/vulkan-driver) from NVIDIA's website.
-
-Finally, to check that Vulkan is ready for use, go to your Vulkan SDK directory (`C:/VulkanSDK/` unless otherwise specified)
-and run the `cube.exe` example within the `Bin` directory. IF you see a rotating gray cube with the LunarG logo, then you
-are all set!
-
-### Running the code
-
-While developing your grass renderer, you will want to keep validation layers enabled so that error checking is turned on. 
-The project is set up such that when you are in `debug` mode, validation layers are enabled, and when you are in `release` mode,
-validation layers are disabled. After building the code, you should be able to run the project without any errors. You will see a plane with a grass texture on it to begin with.
-
-![](img/cube_demo.png)
-
-## Requirements
-
-**Ask on the mailing list for any clarifications.**
-
-In this project, you are given the following code:
-
-* The basic setup for a Vulkan project, including the swapchain, physical device, logical device, and the pipelines described above.
-* Structs for some of the uniform buffers you will be using.
-* Some buffer creation utility functions.
-* A simple interactive camera using the mouse. 
-
-You need to implement the following features/pipeline stages:
-
-* Compute shader (`shaders/compute.comp`)
-* Grass pipeline stages
-  * Vertex shader (`shaders/grass.vert')
-  * Tessellation control shader (`shaders/grass.tesc`)
-  * Tessellation evaluation shader (`shaders/grass.tese`)
-  * Fragment shader (`shaders/grass.frag`)
-* Binding of any extra descriptors you may need
-
-See below for more guidance.
-
-## Base Code Tour
-
-Areas that you need to complete are
-marked with a `TODO` comment. Functions that are useful
-for reference are marked with the comment `CHECKITOUT`.
-
-* `src/main.cpp` is the entry point of our application.
-* `src/Instance.cpp` sets up the application state, initializes the Vulkan library, and contains functions that will create our
-physical and logical device handles.
-* `src/Device.cpp` manages the logical device and sets up the queues that our command buffers will be submitted to.
-* `src/Renderer.cpp` contains most of the rendering implementation, including Vulkan setup and resource creation. You will 
-likely have to make changes to this file in order to support changes to your pipelines.
-* `src/Camera.cpp` manages the camera state.
-* `src/Model.cpp` manages the state of the model that grass will be created on. Currently a plane is hardcoded, but feel free to 
-update this with arbitrary model loading!
-* `src/Blades.cpp` creates the control points corresponding to the grass blades. There are many parameters that you can play with
-here that will change the behavior of your rendered grass blades.
-* `src/Scene.cpp` manages the scene state, including the model, blades, and simualtion time.
-* `src/BufferUtils.cpp` provides helper functions for creating buffers to be used as descriptors.
-
-We left out descriptions for a couple files that you likely won't have to modify. Feel free to investigate them to understand their 
-importance within the scope of the project.
-
-## Grass Rendering
-
-This project is an implementation of the paper, [Responsive Real-Time Grass Rendering for General 3D Scenes](https://www.cg.tuwien.ac.at/research/publications/2017/JAHRMANN-2017-RRTG/JAHRMANN-2017-RRTG-draft.pdf).
-Please make sure to use this paper as a primary resource while implementing your grass renderers. It does a great job of explaining
-the key algorithms and math you will be using. Below is a brief description of the different components in chronological order of how your renderer will
-execute, but feel free to develop the components in whatever order you prefer.
-
-We recommend starting with trying to display the grass blades without any forces on them before trying to add any forces on the blades themselves. Here is an example of what that may look like:
-
-![](img/grass_basic.gif)
-
-### Representing Grass as Bezier Curves
-
-In this project, grass blades will be represented as Bezier curves while performing physics calculations and culling operations. 
-Each Bezier curve has three control points.
-* `v0`: the position of the grass blade on the geomtry
-* `v1`: a Bezier curve guide that is always "above" `v0` with respect to the grass blade's up vector (explained soon)
-* `v2`: a physical guide for which we simulate forces on
-
-We also need to store per-blade characteristics that will help us simulate and tessellate our grass blades correctly.
-* `up`: the blade's up vector, which corresponds to the normal of the geometry that the grass blade resides on at `v0`
-* Orientation: the orientation of the grass blade's face
-* Height: the height of the grass blade
-* Width: the width of the grass blade's face
-* Stiffness coefficient: the stiffness of our grass blade, which will affect the force computations on our blade
-
-We can pack all this data into four `vec4`s, such that `v0.w` holds orientation, `v1.w` holds height, `v2.w` holds width, and 
-`up.w` holds the stiffness coefficient.
-
-![](img/blade_model.jpg)
-
-### Simulating Forces
-
-In this project, you will be simulating forces on grass blades while they are still Bezier curves. This will be done in a compute
-shader using the compute pipeline that has been created for you. Remember that `v2` is our physical guide, so we will be
-applying transformations to `v2` initially, then correcting for potential errors. We will finally update `v1` to maintain the appropriate
-length of our grass blade.
-
-#### Binding Resources
-
-In order to update the state of your grass blades on every frame, you will need to create a storage buffer to maintain the grass data.
-You will also need to pass information about how much time has passed in the simulation and the time since the last frame. To do this,
-you can extend or create descriptor sets that will be bound to the compute pipeline.
-
-#### Gravity
-
-Given a gravity direction, `D.xyz`, and the magnitude of acceleration, `D.w`, we can compute the environmental gravity in
-our scene as `gE = normalize(D.xyz) * D.w`.
-
-We then determine the contribution of the gravity with respect to the front facing direction of the blade, `f`, 
-as a term called the "front gravity". Front gravity is computed as `gF = (1/4) * ||gE|| * f`.
-
-We can then determine the total gravity on the grass blade as `g = gE + gF`.
-
-#### Recovery
-
-Recovery corresponds to the counter-force that brings our grass blade back into equilibrium. This is derived in the paper using Hooke's law.
-In order to determine the recovery force, we need to compare the current position of `v2` to its original position before
-simulation started, `iv2`. At the beginning of our simulation, `v1` and `v2` are initialized to be a distance of the blade height along the `up` vector.
-
-Once we have `iv2`, we can compute the recovery forces as `r = (iv2 - v2) * stiffness`.
-
-#### Wind
-
-In order to simulate wind, you are at liberty to create any wind function you want! In order to have something interesting,
-you can make the function depend on the position of `v0` and a function that changes with time. Consider using some combination
-of sine or cosine functions.
-
-Your wind function will determine a wind direction that is affecting the blade, but it is also worth noting that wind has a larger impact on
-grass blades whose forward directions are parallel to the wind direction. The paper describes this as a "wind alignment" term. We won't go 
-over the exact math here, but use the paper as a reference when implementing this. It does a great job of explaining this!
-
-Once you have a wind direction and a wind alignment term, your total wind force (`w`) will be `windDirection * windAlignment`.
-
-#### Total force
-
-We can then determine a translation for `v2` based on the forces as `tv2 = (gravity + recovery + wind) * deltaTime`. However, we can't simply
-apply this translation and expect the simulation to be robust. Our forces might push `v2` under the ground! Similarly, moving `v2` but leaving
-`v1` in the same position will cause our grass blade to change length, which doesn't make sense.
-
-Read section 5.2 of the paper in order to learn how to determine the corrected final positions for `v1` and `v2`. 
-
-### Culling tests
-
-Although we need to simulate forces on every grass blade at every frame, there are many blades that we won't need to render
-due to a variety of reasons. Here are some heuristics we can use to cull blades that won't contribute positively to a given frame.
-
-#### Orientation culling
-
-Consider the scenario in which the front face direction of the grass blade is perpendicular to the view vector. Since our grass blades
-won't have width, we will end up trying to render parts of the grass that are actually smaller than the size of a pixel. This could
-lead to aliasing artifacts.
-
-In order to remedy this, we can cull these blades! Simply do a dot product test to see if the view vector and front face direction of
-the blade are perpendicular. The paper uses a threshold value of `0.9` to cull, but feel free to use what you think looks best.
-
-#### View-frustum culling
-
-We also want to cull blades that are outside of the view-frustum, considering they won't show up in the frame anyway. To determine if
-a grass blade is in the view-frustum, we want to compare the visibility of three points: `v0, v2, and m`, where `m = (1/4)v0 * (1/2)v1 * (1/4)v2`.
-Notice that we aren't using `v1` for the visibility test. This is because the `v1` is a Bezier guide that doesn't represent a position on the grass blade.
-We instead use `m` to approximate the midpoint of our Bezier curve.
-
-If all three points are outside of the view-frustum, we will cull the grass blade. The paper uses a tolerance value for this test so that we are culling
-blades a little more conservatively. This can help with cases in which the Bezier curve is technically not visible, but we might be able to see the blade
-if we consider its width.
-
-#### Distance culling
-
-Similarly to orientation culling, we can end up with grass blades that at large distances are smaller than the size of a pixel. This could lead to additional
-artifacts in our renders. In this case, we can cull grass blades as a function of their distance from the camera.
-
-You are free to define two parameters here.
-* A max distance afterwhich all grass blades will be culled.
-* A number of buckets to place grass blades between the camera and max distance into.
-
-Define a function such that the grass blades in the bucket closest to the camera are kept while an increasing number of grass blades
-are culled with each farther bucket.
-
-#### Occlusion culling (extra credit)
-
-This type of culling only makes sense if our scene has additional objects aside from the plane and the grass blades. We want to cull grass blades that
-are occluded by other geometry. Think about how you can use a depth map to accomplish this!
-
-### Tessellating Bezier curves into grass blades
-
-In this project, you should pass in each Bezier curve as a single patch to be processed by your grass graphics pipeline. You will tessellate this patch into 
-a quad with a shape of your choosing (as long as it looks sufficiently like grass of course). The paper has some examples of grass shapes you can use as inspiration.
-
-In the tessellation control shader, specify the amount of tessellation you want to occur. Remember that you need to provide enough detail to create the curvature of a grass blade.
-
-The generated vertices will be passed to the tessellation evaluation shader, where you will place the vertices in world space, respecting the width, height, and orientation information
-of each blade. Once you have determined the world space position of each vector, make sure to set the output `gl_Position` in clip space!
-
-** Extra Credit**: Tessellate to varying levels of detail as a function of how far the grass blade is from the camera. For example, if the blade is very far, only generate four vertices in the tessellation control shader.
-
-To build more intuition on how tessellation works, I highly recommend playing with the [helloTessellation sample](https://github.com/CIS565-Fall-2018/Vulkan-Samples/tree/master/samples/5_helloTessellation)
-and reading this [tutorial on tessellation](http://in2gpu.com/2014/07/12/tessellation-tutorial-opengl-4-3/).
+# Vulkan Grass Rendering
+### Grace Gilbert, University of Pennsylvania, CIS 565: GPU Programming and Architecture
+
+<p align="center">
+  <img src="img/video2.gif">
+</p>
+
+* Grace Gilbert
+  * gracelgilbert.com
+* Tested on: Windows 10, i9-9900K @ 3.60GHz 64GB, GeForce RTX 2080 40860MB
+
+## Overview
+In this project I implemented a grass simulator and renderer using Vulkan. Each blade of grass is represented by a Bezier curve, which gets tessellated and shaped into a blade. I use a compute shader to perform physics calculations on the blades, adjusting the Bezier curve to apply gravity, an elastic recovery force, and wind. In this compute shader, I also cull blades to improve efficiency and remove some aliasing and flickering in the render.
 
 ## Resources
-
-### Links
-
-The following resources may be useful for this project.
-
 * [Responsive Real-Time Grass Grass Rendering for General 3D Scenes](https://www.cg.tuwien.ac.at/research/publications/2017/JAHRMANN-2017-RRTG/JAHRMANN-2017-RRTG-draft.pdf)
 * [CIS565 Vulkan samples](https://github.com/CIS565-Fall-2018/Vulkan-Samples)
 * [Official Vulkan documentation](https://www.khronos.org/registry/vulkan/)
@@ -257,46 +20,194 @@ The following resources may be useful for this project.
 * [RenderDoc blog on Vulkan](https://renderdoc.org/vulkan-in-30-minutes.html)
 * [Tessellation tutorial](http://in2gpu.com/2014/07/12/tessellation-tutorial-opengl-4-3/)
 
+## Demos
+Light Breeze           |  Sinusoidal Wind               | Radial Winds
+:-------------------------:|:-------------------------:|:-------------------------:
+![](img/LightBreeze.gif)| ![](img/video2.gif) |![](img/RadialWind.gif)
 
-## Third-Party Code Policy
+The first example has relatively stiff blades of grass and a light breeze applied.  The wind distribution is purely based off of a Fractal Brownian Motion (FBM) noise function.
 
-* Use of any third-party code must be approved by asking on our Google Group.
-* If it is approved, all students are welcome to use it. Generally, we approve
-  use of third-party code that is not a core part of the project. For example,
-  for the path tracer, we would approve using a third-party library for loading
-  models, but would not approve copying and pasting a CUDA function for doing
-  refraction.
-* Third-party code **MUST** be credited in README.md.
-* Using third-party code without its approval, including using another
-  student's code, is an academic integrity violation, and will, at minimum,
-  result in you receiving an F for the semester.
+The second is less stiff grass with sinusoidal functions added together to create the wind distribution. Some FBM noise is layered on top of the sinusoidal functions to add a more natural feel. For this example, I tried imitating a gif I had found online of grass:
 
+![](img/ReferenceGrass.gif)
 
-## README
+The final example contains 4 times as many blades as the first two, and the wind is distributed according to a radiating function. This is somewhat of a helicopter effect, as if a helicopter is landing in the center of the radiating wind.
 
-* A brief description of the project and the specific features you implemented.
-* GIFs of your project in its different stages with the different features being added incrementally.
-* A performance analysis (described below).
+## Implementation
+### Pipeline Setup
+This project utilizes the Vulkan pipeline. Much of this pipeline was set up in the base code, getting to the point of a textured ground plane rendering with a simple, moveable camera setup. To render grass, I set up an additional grass descriptor set layout and descriptor set, as well as a compute descriptor set to pass in the appropriate data into the compute shader. 
 
-### Performance Analysis
+The grass descriptor set passes the model matrix for each group of grass blades into the grass rendering pipeline. This model matrix transforms all of the blades, ensuring that the patch of grass blades is located in the correct position.
 
-The performance analysis is where you will investigate how...
-* Your renderer handles varying numbers of grass blades
-* The improvement you get by culling using each of the three culling tests
+The compute descriptor set passes in three buffers to the compute shader. The first of these buffers is the input blades data, which holds the control points for each blade's Bezier curve, as well as the blades height, width, orientation, stiffness, and the up vector of the surface it sits on. This data is what gets modified to apply physics to the blades. Next is another buffer of blades which will contain the blades that remain after culling. This is the buffer whose data gets passed into the render pipeline, as these are the blades to be rendered. Initially, prior to implementing culling, this buffer just copied the input blades data.  Finally, the compute shader takes in a buffer that stores the number of remaining blades. Each non-culled blade increments this number using an atomic add. This number ensures that we render the right number of blades each frame. 
 
-## Submit
+The overall path of the pipeline is first the compute shader, where physics and culling are performed. The output data then goes to the grass vertex shader, which transforms the control points with the blade's model matrix. Then the tessellation control shader determines how finely to tesselate the blade. The tessellation evaluation shader shapes the tessellated blade. Finally, the fragment shader shades the blades, which are then rendered to the screen.
 
-If you have modified any of the `CMakeLists.txt` files at all (aside from the
-list of `SOURCE_FILES`), mentions it explicity.
-Beware of any build issues discussed on the Google Group.
+### Blade Tessellation and Rendering
+Each blade of grass is represented as a Bezier curve with three control points, `v0`, `v1`, and `v2`, where `v0` is the base position of the blade. `v1` always lies directly above `v0`, and `v2` is what we apply forces to to animate the grass. There is also an up vector, defining the up direcction of the surface the blades sit on. The vectors are all 4D vectors, where the 4th element holds another piece of information: height, width, stiffness, and orientation. The following image represents the blade model described:
 
-Open a GitHub pull request so that we can see that you have finished.
-The title should be "Project 6: YOUR NAME".
-The template of the comment section of your pull request is attached below, you can do some copy and paste:  
+![](img/blade_model.jpg)
 
-* [Repo Link](https://link-to-your-repo)
-* (Briefly) Mentions features that you've completed. Especially those bells and whistles you want to highlight
-    * Feature 0
-    * Feature 1
-    * ...
-* Feedback on the project itself, if any.
+The vectors get passed into the vertex shader, where they are transformed into model space using the model matrix of the group of blades. The base position, `v0`, gets passed as the gl_Position into the tessellation control shader. The control shader sets the tessellation levels and passes along the control points and gl_Position into the tessellation evaluation shader. The tessellation levels control how subdivided the tessellation will be, which affects how smooth the curves in the grass blades will be.
+
+The tessellation evaluation shader is where we shape the blades to curve along their Bezier curve and to have a grass blade shape along their width. To shape the blade along the Bezier curve defined by the control points, we perform a series of interpolations, following De Casteljau's algorithm:
+
+![](img/BezierEquations.PNG)
+
+We then use these interpolated values to find the final position of our current point in the tessellation:
+
+![](img/BezierPositionEquation.PNG)
+
+The t value in the above equation determines the shape of the blade of grass, acheiving any of the shapes pictures below:
+
+![](img/BladeShapes.PNG)
+
+Finally, this position is projected into screen space with the view projection matrix.
+
+The last step of the blade rendering is the fragment shader. This shader applies a gradient to the blades, making them dark green at their base and light green at the tips. This shading uses the height at the current portion of the blade. This height is a mix between the world space height and the individual blade space height. The world space height ensures that parts of the blades at the same height will have similar luminance. The blade space height ensures that even shorter blades still have some light green at their tips. The mixing of these two height spaces gives a more natural, varied look to the grass. 
+
+Simply rendering the blades of grass gives the following results:
+
+Quadratic Blades             |  Triangular Blades          
+:-------------------------:|:-------------------------:
+![](img/StillBlades.PNG)| ![](img/TriangleBlades.PNG)
+
+I initially tried using lambertian shading based on the angle of the blade of grass, but this caused the color distrubition to be too varied. Because each blade is a flat plane, the orientation dramatically affects the lighting on it, causing all blades to have different tones of green, which does not look realistic. 
+
+![](img/LambertianShading.PNG)
+
+Something I added for visual appeal was I changed the background color of the window to a sky blue, and changed the base texture from grass to dirt to place the grass in a more realistic setting.
+
+### Physics
+The process of applying physics to the blades of grass involves calculating all forces that act upon the blades, and then updating the Bezier control points according to these forces. We are applying forces onto the third control point, `v2`, however there are measures we must take to ensure that when we apply the forces, we maintain certain properties: the blade must not fall through the ground plane, the length of the curved blade must be the same as the height of the blade to preserve length, and `v1` must be updated in relation to `v2`. 
+
+We start by finding the updated position for `v2`, ensuring that it is above ground:
+
+![](img/CurveUpdateStage1.PNG)
+
+To find the updated position of `v1`, which must always be directly above the base of the blade, we find the length of the projection of the blade onto the ground and use this to find `v1`:
+
+![](img/CurveUpdateStage2.PNG)
+
+![](img/CurveUpdateStage3.PNG)
+
+The final step is to ensure that the length of the curved blade is not longer than the height of the straight blade. We first evaluation the length of the Bezier curve:
+
+![](img/CurveUpdateStage4.PNG)
+
+Finally, we use this length and the height of the blade to set the final updated control points:
+
+![](img/CurveUpdateStage5.PNG)
+
+Below I describe how we calculate each of the forces that act on the blades of grass.
+
+#### Gravity
+To apply gravity onto the grass blades, we start with a direction and magnitude for gravity, which we use to find the environmental gravity:
+```
+GravtityDirection = (0, -1, 0)
+GravityMagnitude = 9.8
+GravityEnvironmental = (0, -9.8, 0)
+```
+Because blades are represented as flat planes, they can only fall in one direction, the direction that they are facing. To find this direction, I converted the orientation of the blade into a direction vector with simple trigonometry:
+```
+BladeFacingDirection = (cos(orientation), 0, sin(orientation))
+```
+We then calculate how much gravity contributes with respect to this facing direction:
+```
+GravityFront = (1/4) * length(GravityEnvironmental) * BladeFacingDirection
+```
+Finally, the total force of gravity is the sum of the environmental gravity and the front facing gravity:
+```
+GravityForce = GravityEnvironmental + GravityFront
+```
+
+With just gravity applied, the blades fall to the ground (the blades fall after a few seconds):
+
+![](img/gravityOnly.gif)
+
+#### Recovery
+Blades of grass have some elastic stiffness to them, allowing them to remain mostly upright even in the presence of gravity. To represent this, we add a recovery force to counter the gravitational force. We use Hooke's law to simulate this.
+
+The recovery force is found by comparing the current position of `v2`, the third control point, to its original position at the start of the simulation, `iv2`. Knowing both `v2` and `iv2`, the recovery force is as follows: 
+```
+r = (iv2 - v2) * BladeStiffness.
+```
+
+With gravity and recovery only, the blades reach a state of equilibrium and do not move from this position:
+
+![](img/GravityAndRecovery.PNG)
+
+#### Wind
+The final force is the wind force. The wind force on each blade is determined by a function of the position of the base of each blade, wi(v0). This function defines the direction and strength of the wind at each point in space. For my wind functions, I used combinations of sinusoidal function and FBM noise. The noise breaks up some of the sinusoidal patterns in the wind.  
+
+We next need to see how the wind affects the blade based on its the blade's orientation. Note that a wind force acting perpendicular to the front face of the blade will have no affect on that blade, as it can only bend along its front face. The affect of the wind becomes stronger as the direction and the front face become more aligned. The calculation for the final wind force is the following: 
+
+![](img/WindCalculations.PNG)
+
+![](img/FinalWindForce.PNG)
+
+With a light wind distribution purely based on and FBM noise function, the result of all three forces combined looks as follows:
+
+![](img/AllForces.gif)
+
+### Culling
+There are many blades of grass that we in fact do not have to render due to various reasons. We still must apply physics to all blades, as the physics may move an unrendered blade into a state where it must be rendered, but we can cut down the cost of rendering many blades using the following culling techniques.
+
+#### Orientation
+Some blades are angled in such a way that they appear very thin in camera. If the line of sight from the camera to that blade is perpendicular or nearly perpendicular to the front facing direction of the blade, the blade will appear as a very thing line. We can cull these blades, as they are nearly invisible. In addition to adding efficiency, this culling will reduce some flickering on screen. The thin blades may be smaller than a single pixel width, cuasing flickering as the line of the blade's edge flickers in and out of view. As few to none of the blades will be perfectly perpendicular to the camera view direction, we use a threshold to cull out these blades. The culling process looks like the following, where dirc is the front facing direction of the blade and dirb is the direction from the camera to the blade:
+
+![](img/OrientationCulling.PNG)
+
+The following illustrates orientation culling using an extreme threshold to make the effect visible. Only blades that are very strongly facing the camera will remain unculled:
+
+![](img/OrientationCullingVideo.gif)
+
+#### Frustum
+Not all blades are within sight of the camera at all times. There is no need to render blades that the camera cannot see, so we can cull these blades. To do this, we check the visibility of three points on the blade, `v0`, `v2`, and `m`, which is a midpoint on the curve calculated as `m = (1/4)v0 + (1/2)v1 + (1/4)v2`. If all three points are not visible, then we can cull the blade.
+
+To determine if a point is visible on camera, we project it into screen space and see if it falls within the bounds of the screen, with a small tolerance, as we want some buffer area around the screen to prevent seeing the blades disappear as the move off screen, as the curve may be off screen, but the blades have width, so their geometry might still be on screen.
+
+![](img/FrustumCulling.PNG)
+
+The following illustrates frustum culling with a negative tolerance, culling blades that fall just within the frustum in order to make the effect visible. Important to notice is that the blades at and behind the far clip plane are being culled, so as the camera moves in and out, the cutoff line changes.  Also notice that at the edges, we can see blades flicker in and out of the screen, as they get culled when they move too far out.
+
+![](img/FrustumCullingVideo.gif)
+
+#### Distance
+Like with orientation culling, if a blade is very far fromm the camera, it may appear very small on screen, causing rendering artifacts. To reduce these artifacts, we cull blades based on their distance from camera. Rather than a sharp cutoff where blades go from being rendered to being culled a certain distance, we step the culling gradually in regions. We define a maximum distance and a number of regions. As the regions get further from camera, we cull increasingly more of the blades in that region. In the first region, no blades are culled, and in the last region all blades are culled, giving a smooth transition of blade density as we move farther from camera.
+
+Distance from camera is calculated as follows:
+
+![](img/DistanceCalculationForCulling.PNG)
+
+Culling is determined according to this distance and the defined regions:
+
+![](img/DistanceCulling.PNG)
+
+The following illustrates distance culling with extreme, quick density falloff to see the effect. The maximum distance is 50, so the blade density drops fairly close to camera, and there are 10 groups to illustrate the regions of density falloff:
+
+![](img/DistanceCullingVideo.gif)
+
+## Performance Analysis
+To analyze performance, I compared the per-frame render time for different numbers of blades and with different culling optimizations turned on. I kept the camera the same for all tests. Note that for distance culling, I adjusted the maximum depth so that it the culling would actually affect the scene at the tested camera angle.
+
+2^10 and 2^13 Blades       |  2^15 and 2^18 Blades     | 2^21 and 2^24 Blades
+:-------------------------:|:-------------------------:|:-------------------------:
+![](img/PerformanceChart12.PNG)| ![](img/PerformanceChart34.PNG) |![](img/PerformanceChart56.PNG)
+
+The results indicate that with a small number of blades, the culling optimizations are not extremely effective. With 2^10 blades, orientation and distance culling actually slow down the rendering. However, with more blades, even just 2^13, any of the optimizations speed up the render, and for all tested number of blades, all optimizations together sped up the render time. 
+
+Generally, distance culling sped up the render the most significantly. However, this may not be the most telling result, as I adjusted distance culling to have an effect with the current camera position, so it may be optimizating more than it might if the regions were set differently. One reason distance culling may have a stronger impact is because more of the blades farther back fall into the viewing frustum.  So if we can cull a lot of the ones that are in the frustum but far back, this may cull more than simple culling the ones outside the frustum altogether.
+
+## Bloopers
+In the process of trying to get the blades to render, I was indexing into the input arrays in the tessellation evaluation shader incorrectly. This caused all of my blades of grass to render as one single blade.
+
+![](img/singleBlade.PNG)
+
+In fixing this same error, I lowered the number of blades to see what was happening, and got this image:
+
+![](img/TesselationIndexingBlooper.PNG)
+
+Another error that produced an interesting result was accidentally using the length of `v0` in my force application.  This caused very large forces to be applied when `v0` was very close to the origin, giving this image:
+
+![](img/TallCentralGrass.PNG)
