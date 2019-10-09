@@ -1,5 +1,5 @@
-**University of Pennsylvania, CIS 565: GPU Programming and Architecture,
-Vulkan Grass Rendering**
+# Vulkan Grass Rendering
+### Grace Gilbert, University of Pennsylvania, CIS 565: GPU Programming and Architecture
 
 <p align="center">
   <img src="img/video2.gif">
