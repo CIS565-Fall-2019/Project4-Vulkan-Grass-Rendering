@@ -6,7 +6,7 @@ Caroline Lachanski: [LinkedIn](https://www.linkedin.com/in/caroline-lachanski/),
 
 Tested on: Windows 10, i5-6500 @ 3.20GHz 16GB, GTX 1660 (personal computer)
 
-// header gif here
+![](img/thatSureIsGrass.gif)
 
 ## Project Description
 
@@ -42,12 +42,26 @@ There are two components to the gravity force in this simulation. The first is e
 
 The total gravity is computed as `gravity = gE + gF`.
 
-#### Wind
-
 
 #### Recovery
 
 The recovery force is the counterforce to the other applied forces, wanting the blade to return to its initial upright position, and is based on Hooke's Law. Recovery is calculated as `recovery = (iv2 - v2) * stiffness`, where `iv2` is the original position of `v2` before any simulation and `v2` is the current position.
+
+Here's the grass with only gravity and recovery forces applied:
+
+![](img/stillGrass.PNG)
+
+#### Wind
+
+We can let the wind direction be anything we wish, such as a simple unidirectional wind or a more complex function that varies based on the blade position or wind source position. However, it's important to realize that effect of the wind on the blade will depend on the blade's orientation with respect to the wind direction. Additionally, a blade that is standing straight will be more affected by wind than a blade that is pushed to the ground. We thus calculate a `windAlignment` value. The total wind force is then calculated as `wind = windDirection * windAlignment`.
+
+Here's the grass using more basic, directional wind function:
+
+![](img/directionalWind.gif)
+
+Here's a more complex wind function, using 2D FBM based on blade position and time:
+
+![](img/moreComplexWind.gif)
 
 #### Simulation Correction
 
