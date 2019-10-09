@@ -5,6 +5,7 @@ layout(set = 1, binding = 0) uniform ModelBufferObject {
     mat4 model;
 };
 
+// TODO: Declare vertex shader inputs and outputs
 layout(location = 0) in vec4 v0;
 layout(location = 1) in vec4 v1;
 layout(location = 2) in vec4 v2;
@@ -15,7 +16,6 @@ layout(location = 1) out vec4 out_v1;
 layout(location = 2) out vec4 out_v2;
 layout(location = 3) out vec4 out_up;
 
-// TODO: Declare vertex shader inputs and outputs
 
 out gl_PerVertex {
     vec4 gl_Position;
@@ -23,11 +23,11 @@ out gl_PerVertex {
 
 void main() {
 	// TODO: Write gl_Position and any other shader outputs
-
-	out_v0 = model * v0;
-	out_v1 = model * v1;
-	out_v2 = model * v2;
-	out_up = model * up;
+	// Transform all vectors by model matrix
+	out_v0 = vec4((model * vec4(v0.xyz, 1.f)).xyz, v0.w);
+	out_v1 = vec4((model * vec4(v1.xyz, 1.f)).xyz, v1.w);
+	out_v2 = vec4((model * vec4(v2.xyz, 1.f)).xyz, v2.w);
+	out_up = vec4((model * vec4(up.xyz, 1.f)).xyz, up.w);
 
 	gl_Position = model * vec4(v0.xyz, 1.0);
 }

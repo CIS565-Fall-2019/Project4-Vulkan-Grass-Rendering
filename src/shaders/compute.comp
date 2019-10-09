@@ -53,9 +53,48 @@ layout(set = 2, binding = 2) buffer NumBlades {
 // 	  uint firstInstance; // = 0
 // } numBlades;
 
+
 bool inBounds(float value, float bounds) {
     return (value >= -bounds) && (value <= bounds);
 }
+
+float random1( vec2 p , vec2 seed) {
+  return fract(sin(dot(p + seed, vec2(127.1, 311.7))) * 43758.5453);
+}
+
+float interpNoise2d(float x, float y) {
+  float intX = floor(x);
+  float fractX = fract(x);
+  float intY = floor(y);
+  float fractY = fract(y);
+
+  float v1 = random1(vec2(intX, intY), vec2(1.f, 1.f));
+  float v2 = random1(vec2(intX + 1.f, intY), vec2(1.f, 1.f));
+  float v3 = random1(vec2(intX, intY + 1.f), vec2(1.f, 1.f));
+  float v4 = random1(vec2(intX + 1.f, intY + 1.f), vec2(1.f, 1.f));
+
+  float i1 = mix(v1, v2, fractX);
+  float i2 = mix(v3, v4, fractX);
+  return mix(i1, i2, fractY);
+  return 2.0;
+}
+
+float fbm(float x, float y, float height, float xScale, float yScale) {
+  float total = 0.f;
+  float persistence = 0.5f;
+  int octaves = 4;
+  float freq = 2.0;
+  float amp = 1.0;
+  for (int i = 0; i < octaves; i++) {
+    // total += interpNoise2d( (x / xScale) * freq, (y / yScale) * freq) * amp;
+    total += interpNoise2d( (x / xScale) * freq, (y / yScale) * freq) * amp;
+    freq *= 2.0;
+    amp *= persistence;
+  }
+  return height * total;
+}
+
+
 
 void main() {
 	// Reset the number of blades to 0
@@ -90,8 +129,13 @@ void main() {
 	vec3 r = (iv2 - v2) * stiffness;
 
 
-	vec3 wi = 22.f * vec3(sin((v0.x + 30.f) * 0.8 + totalTime / 1.2), 0.f, cos((v0.z + 2.5f) * 0.2 + totalTime / 2.5f)) + 
-	          25.f * vec3(cos(v0.z * 0.5 + totalTime / 1.5f + 5.0), 0.f, sin(v0.x * 0.3 + totalTime / 2.f));
+	float currFBM = fbm(v0.x, v0.z, 2.0, 1.0, 1.0);
+	vec3 noise = vec3(fbm(sin(v0.x / 2.0 + totalTime / 10.0 + 1.f), cos(v0.z / 2.f + totalTime / 10.0 + 4.f), 1.0, 1.0, 1.0),
+					  fbm(cos(v0.x / 2.0 + totalTime / 10.0 + 2.f), sin(v0.z / 2.f + totalTime / 10.0 + 5.f), 1.0, 1.0, 1.0),
+					  fbm(sin(v0.x / 2.0 + totalTime / 10.0 + 3.f), cos(v0.z / 2.f + totalTime / 10.0 + 6.f), 1.0, 1.0, 1.0)) - vec3(1.f);
+	vec3 wi = 23.f * vec3(sin((v0.x * 1.3 + 30.f) * 0.6 + totalTime / 1.4), 0.f, 0.5 * cos((v0.z * 1.2 + 2.5f) * 0.2 + totalTime / 1.8f)) + 
+	          28.f * vec3(cos(v0.z * 0.8 * 0.5 + totalTime / 1.2f + 5.0), 0.f, 0.5 * sin(v0.x * 0.3 * 0.9 + totalTime / 1.5f));
+	wi = (wi + 40.f * noise) / 1.0;
 
 	float fd = 1.f - abs(dot(normalize(wi), normalize(v2 - v0)));
 	float fr = dot(v2 - v0, up) / height;
@@ -128,29 +172,29 @@ void main() {
 		cullBlade = true;
 	}
 
-	float tolerance = 0.1;
-	vec3 m = (1.f/4.f) * v0 + (1.f/2.f) * v1 * (1.f/4.f) * v2;
+	float tolerance = 0.2;
+	vec3 m = (1.f/4.f) * v0 + (1.f/2.f) * v1 + (1.f/4.f) * v2;
 
 	vec4 v0Prime = camera.proj * camera.view * vec4(v0, 1.f);
 	float hv0 = v0Prime.w + tolerance;
 	bool vv0 = (v0Prime.x >= -hv0) && (v0Prime.x <= hv0) && 
 			   (v0Prime.y >= -hv0) && (v0Prime.y <= hv0) && 
-			   (v0Prime.z >= -tolerance) && (v0Prime.z <= hv0);
+			   (v0Prime.z >= -hv0) && (v0Prime.z <= hv0);
 
 
     vec4 mPrime = camera.proj * camera.view * vec4(m, 1.f);
 	float hm = mPrime.w + tolerance;
 	bool vm = (mPrime.x >= -hm) && (mPrime.x <= hm) && 
 			  (mPrime.y >= -hm) && (mPrime.y <= hm) && 
-			  (mPrime.z >= -tolerance) && (mPrime.z <= hm);
+			  (mPrime.z >= -hm) && (mPrime.z <= hm);
 
 	vec4 v2Prime = camera.proj * camera.view * vec4(v2, 1.f);
 	float hv2 = v2Prime.w + tolerance;
 	bool vv2 = (v2Prime.x >= -hv2) && (v2Prime.x <= hv2) && 
 			   (v2Prime.y >= -hv2) && (v2Prime.y <= hv2) && 
-			   (v2Prime.z >= -tolerance) && (v2Prime.z <= hv2);
+			   (v2Prime.z >= -hv2) && (v2Prime.z <= hv2);
 	if (!vv0 && !vm && !vv2) {
-//		cullBlade = true;
+		cullBlade = true;
 	}
 	
 	vec4 cameraPos = inverse(camera.view) * vec4(0, 0, 0, 1);

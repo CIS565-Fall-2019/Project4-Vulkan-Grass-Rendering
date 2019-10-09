@@ -21,6 +21,7 @@ void InitializeWindow(int width, int height, const char* name) {
     }
 
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+
     window = glfwCreateWindow(width, height, name, nullptr, nullptr);
 
     if (!window) {

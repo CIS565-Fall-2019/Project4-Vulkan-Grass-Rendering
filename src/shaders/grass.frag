@@ -15,10 +15,8 @@ layout(location = 0) out vec4 outColor;
 
 void main() {
     // TODO: Compute fragment color
-	float lambertianTerm = clamp(abs(dot(normal, lightDir)), 0.0, 1.0);
-	lambertianTerm = mix(height, lambertianTerm, 0.01);
 	float ambient = 0.15;
 	vec4 color = vec4(0.45f, 0.6f, 0.45f, 1.f);
 
-    outColor = color * clamp((ambient + lambertianTerm), 0.f, 1.f);
+    outColor = color * clamp((ambient + height), 0.f, 1.f);
 }
