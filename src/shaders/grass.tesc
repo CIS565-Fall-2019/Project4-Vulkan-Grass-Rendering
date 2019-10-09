@@ -49,6 +49,7 @@ void main() {
 	//tessellation on multiple levels depending on depth
 	//compute the depth in ndc
 	//https://docs.google.com/presentation/d/1YkDE7YAqoffC9wUmDxFo9WZjiLqWI5SlQRojOeCBPGs/edit#slide=id.g2492ec6f45_0_342 560 slides
+	//Thanks Jie Meng's help
 	//get the world position of v0 of this blade from gl_in
 	vec4 v0_world = gl_in[gl_InvocationID].gl_Position;
 	v0_world.w = 1.0; //it is a point
