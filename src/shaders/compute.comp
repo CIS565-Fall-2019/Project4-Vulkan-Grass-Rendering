@@ -25,8 +25,8 @@ layout(set = 2, binding = 0) buffer InputBlades {
 	Blade inputBlades[];
 };
 
-layout(set = 2, binding = 1) buffer CulledBlades {
-	Blade culledBlades[];
+layout(set = 2, binding = 1) buffer RemainingBlades {
+	Blade remainingBlades[];
 };
 
 layout(set = 2, binding = 2) buffer NumBlades {
@@ -165,10 +165,11 @@ void main() {
 
 	bool cullBlade = false;
 	vec3 dirc = f;
-	vec3 cameraForward = vec3(camera.view[2][0], camera.view[2][1], camera.view[2][2]);
-	vec3 dirb = normalize(cameraForward);
+	vec4 cameraPos = inverse(camera.view) * vec4(0, 0, 0, 1);
+//	vec3 cameraForward = vec3(camera.view[2][0], camera.view[2][1], camera.view[2][2]);
+	vec3 dirb = normalize(cameraPos.xyz - v0);
 	float orientationValue = abs(dot(dirc, dirb));
-	if (orientationValue > 0.98) {
+	if (orientationValue > 0.95) {
 		cullBlade = true;
 	}
 
@@ -197,7 +198,6 @@ void main() {
 		cullBlade = true;
 	}
 	
-	vec4 cameraPos = inverse(camera.view) * vec4(0, 0, 0, 1);
 	float dproj = length(v0 - cameraPos.xyz - up * dot(v0 - cameraPos.xyz, up));
 	int numIntervals = 5;
 	float dmax = 100.f;
@@ -210,7 +210,7 @@ void main() {
 
 
 	if (!cullBlade) {
-		culledBlades[atomicAdd(numBlades.vertexCount, 1)] = inputBlades[gl_GlobalInvocationID.x];
+		remainingBlades[atomicAdd(numBlades.vertexCount, 1)] = inputBlades[gl_GlobalInvocationID.x];
 	}
 
 
