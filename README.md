@@ -1,63 +1,39 @@
-Instructions - Vulkan Grass Rendering
-========================
+**University of Pennsylvania, CIS 565: GPU Programming and Architecture,
+Vulkan Grass Rendering**
 
-This is due **Wednesday 10/9, evening at midnight**.
+![](img/video2.gif)
 
-**QUICK NOTE**: Please use `git clone --recursive` when cloning this repo as there are submodules which need to be cloned as well.
+* Grace Gilbert
+  * gracelgilbert.com
+* Tested on: Windows 10, i9-9900K @ 3.60GHz 64GB, GeForce RTX 2080 40860MB
 
-**Summary:**
-In this project, you will use Vulkan to implement a grass simulator and renderer. You will
-use compute shaders to perform physics calculations on Bezier curves that represent individual
-grass blades in your application. Since rendering every grass blade on every frame will is fairly
-inefficient, you will also use compute shaders to cull grass blades that don't contribute to a given frame.
-The remaining blades will be passed to a graphics pipeline, in which you will write several shaders.
-You will write a vertex shader to transform Bezier control points, tessellation shaders to dynamically create
-the grass geometry from the Bezier curves, and a fragment shader to shade the grass blades.
+## Overview
+In this project I implemented a grass simulator and renderer using Vulkan. Each blade of grass is represented by a Bezier curve, which gets tessellated and shaped into a blade. I use a compute shader to perform physics calculations on the blades, adjusting the Bezier curve to apply gravity, an elastic recovery force, and wind. In this compute shader, I also cull blades to improve efficiency and remove some aliasing and flickering in the render.
 
-The base code provided includes all of the basic Vulkan setup, including a compute pipeline that will run your compute
-shaders and two graphics pipelines, one for rendering the geometry that grass will be placed on and the other for 
-rendering the grass itself. Your job will be to write the shaders for the grass graphics pipeline and the compute pipeline, 
-as well as binding any resources (descriptors) you may need to accomplish the tasks described in this assignment.
+## Resources
+* [Responsive Real-Time Grass Grass Rendering for General 3D Scenes](https://www.cg.tuwien.ac.at/research/publications/2017/JAHRMANN-2017-RRTG/JAHRMANN-2017-RRTG-draft.pdf)
+* [CIS565 Vulkan samples](https://github.com/CIS565-Fall-2018/Vulkan-Samples)
+* [Official Vulkan documentation](https://www.khronos.org/registry/vulkan/)
+* [Vulkan tutorial](https://vulkan-tutorial.com/)
+* [RenderDoc blog on Vulkan](https://renderdoc.org/vulkan-in-30-minutes.html)
+* [Tessellation tutorial](http://in2gpu.com/2014/07/12/tessellation-tutorial-opengl-4-3/)
 
-![](img/grass.gif) ![](img/grass2.gif)
+## Implementation
+### Pipeline Setup
+### Blade Tessellation and Rendering
+### Physics
+#### Gravity
+#### Recovery
+#### Wind
+### Culling
+#### Orientation
+#### Frustum
+#### Distance
+## Performance Analysis
+## Bloopers
 
-You are not required to use this base code if you don't want
-to. You may also change any part of the base code as you please.
-**This is YOUR project.** The above .gifs are just examples that you
-can use as a reference to compare to. Feel free to get creative with your implementations!
 
-**Important:**
-- If you are not in CGGT/DMD, you may replace this project with a GPU compute
-project. You MUST get this pre-approved by Shehzan or one of the TAs before continuing!
 
-### Contents
-
-* `src/` C++/Vulkan source files.
-  * `shaders/` glsl shader source files
-  * `images/` images used as textures within graphics pipelines
-* `external/` Includes and static libraries for 3rd party libraries.
-* `img/` Screenshots and images to use in your READMEs
-
-### Installing Vulkan
-
-In order to run a Vulkan project, you first need to download and install the [Vulkan SDK](https://vulkan.lunarg.com/).
-Make sure to run the downloaded installed as administrator so that the installer can set the appropriate environment
-variables for you.
-
-Once you have done this, you need to make sure your GPU driver supports Vulkan. Download and install a 
-[Vulkan driver](https://developer.nvidia.com/vulkan-driver) from NVIDIA's website.
-
-Finally, to check that Vulkan is ready for use, go to your Vulkan SDK directory (`C:/VulkanSDK/` unless otherwise specified)
-and run the `cube.exe` example within the `Bin` directory. IF you see a rotating gray cube with the LunarG logo, then you
-are all set!
-
-### Running the code
-
-While developing your grass renderer, you will want to keep validation layers enabled so that error checking is turned on. 
-The project is set up such that when you are in `debug` mode, validation layers are enabled, and when you are in `release` mode,
-validation layers are disabled. After building the code, you should be able to run the project without any errors. You will see a plane with a grass texture on it to begin with.
-
-![](img/cube_demo.png)
 
 ## Requirements
 
@@ -224,10 +200,6 @@ You are free to define two parameters here.
 Define a function such that the grass blades in the bucket closest to the camera are kept while an increasing number of grass blades
 are culled with each farther bucket.
 
-#### Occlusion culling (extra credit)
-
-This type of culling only makes sense if our scene has additional objects aside from the plane and the grass blades. We want to cull grass blades that
-are occluded by other geometry. Think about how you can use a depth map to accomplish this!
 
 ### Tessellating Bezier curves into grass blades
 
@@ -244,32 +216,6 @@ of each blade. Once you have determined the world space position of each vector,
 To build more intuition on how tessellation works, I highly recommend playing with the [helloTessellation sample](https://github.com/CIS565-Fall-2018/Vulkan-Samples/tree/master/samples/5_helloTessellation)
 and reading this [tutorial on tessellation](http://in2gpu.com/2014/07/12/tessellation-tutorial-opengl-4-3/).
 
-## Resources
-
-### Links
-
-The following resources may be useful for this project.
-
-* [Responsive Real-Time Grass Grass Rendering for General 3D Scenes](https://www.cg.tuwien.ac.at/research/publications/2017/JAHRMANN-2017-RRTG/JAHRMANN-2017-RRTG-draft.pdf)
-* [CIS565 Vulkan samples](https://github.com/CIS565-Fall-2018/Vulkan-Samples)
-* [Official Vulkan documentation](https://www.khronos.org/registry/vulkan/)
-* [Vulkan tutorial](https://vulkan-tutorial.com/)
-* [RenderDoc blog on Vulkan](https://renderdoc.org/vulkan-in-30-minutes.html)
-* [Tessellation tutorial](http://in2gpu.com/2014/07/12/tessellation-tutorial-opengl-4-3/)
-
-
-## Third-Party Code Policy
-
-* Use of any third-party code must be approved by asking on our Google Group.
-* If it is approved, all students are welcome to use it. Generally, we approve
-  use of third-party code that is not a core part of the project. For example,
-  for the path tracer, we would approve using a third-party library for loading
-  models, but would not approve copying and pasting a CUDA function for doing
-  refraction.
-* Third-party code **MUST** be credited in README.md.
-* Using third-party code without its approval, including using another
-  student's code, is an academic integrity violation, and will, at minimum,
-  result in you receiving an F for the semester.
 
 
 ## README
