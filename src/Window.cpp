@@ -24,6 +24,7 @@ void InitializeWindow(int width, int height, const char* name) {
 
     window = glfwCreateWindow(width, height, name, nullptr, nullptr);
 
+
     if (!window) {
         fprintf(stderr, "Failed to initialize GLFW window\n");
         glfwTerminate();
