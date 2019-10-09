@@ -189,7 +189,15 @@ The following illustrates distance culling with extreme, quick density falloff t
 ![](img/DistanceCullingVideo.gif)
 
 ## Performance Analysis
+To analyze performance, I compared the per-frame render time for different numbers of blades and with different culling optimizations turned on. I kept the camera the same for all tests. Note that for distance culling, I adjusted the maximum depth so that it the culling would actually affect the scene at the tested camera angle.
 
+2^10 and 2^13 Blades       |  2^15 and 2^18 Blades     | 2^21 and 2^24 Blades
+:-------------------------:|:-------------------------:|:-------------------------:
+![](img/PerformanceChart12.PNG)| ![](img/PerformanceChart34.PNG) |![](img/PerformanceChart56.PNG)
+
+The results indicate that with a small number of blades, the culling optimizations are not extremely effective. With 2^10 blades, orientation and distance culling actually slow down the rendering. However, with more blades, even just 2^13, any of the optimizations speed up the render, and for all tested number of blades, all optimizations together sped up the render time. 
+
+Generally, distance culling sped up the render the most significantly. However, this may not be the most telling result, as I adjusted distance culling to have an effect with the current camera position, so it may be optimizating more than it might if the regions were set differently. One reason distance culling may have a stronger impact is because more of the blades farther back fall into the viewing frustum.  So if we can cull a lot of the ones that are in the frustum but far back, this may cull more than simple culling the ones outside the frustum altogether.
 
 ## Bloopers
 In the process of trying to get the blades to render, I was indexing into the input arrays in the tessellation evaluation shader incorrectly. This caused all of my blades of grass to render as one single blade.
