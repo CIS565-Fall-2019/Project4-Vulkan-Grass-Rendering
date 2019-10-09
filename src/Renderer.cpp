@@ -201,21 +201,21 @@ void Renderer::CreateComputeDescriptorSetLayout() {
     // will be stored at each binding
     VkDescriptorSetLayoutBinding inputBladesLayoutBinding = {};
     inputBladesLayoutBinding.binding = 0;
-    inputBladesLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    inputBladesLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
     inputBladesLayoutBinding.descriptorCount = 1;
     inputBladesLayoutBinding.stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
     inputBladesLayoutBinding.pImmutableSamplers = nullptr;
 
     VkDescriptorSetLayoutBinding culledBladesLayoutBinding = {};
     culledBladesLayoutBinding.binding = 1;
-    culledBladesLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    culledBladesLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
     culledBladesLayoutBinding.descriptorCount = 1;
     culledBladesLayoutBinding.stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
     culledBladesLayoutBinding.pImmutableSamplers = nullptr;
 
     VkDescriptorSetLayoutBinding numBladesLayoutBinding = {};
     numBladesLayoutBinding.binding = 2;
-    numBladesLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    numBladesLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
     numBladesLayoutBinding.descriptorCount = 1;
     numBladesLayoutBinding.stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
     numBladesLayoutBinding.pImmutableSamplers = nullptr;
@@ -461,12 +461,12 @@ void Renderer::CreateComputeDescriptorSets() {
         VkDescriptorBufferInfo inputBufferInfo = {};
         inputBufferInfo.buffer = scene->GetBlades()[i]->GetBladesBuffer();
         inputBufferInfo.offset = 0;
-        inputBufferInfo.range = sizeof(Blade);
+        inputBufferInfo.range = NUM_BLADES * sizeof(Blade); //DOUBT WHETHER NEED NUM_BLADES
 
         VkDescriptorBufferInfo culledBufferInfo = {};
         culledBufferInfo.buffer = scene->GetBlades()[i]->GetCulledBladesBuffer();
         culledBufferInfo.offset = 0;
-        culledBufferInfo.range = sizeof(Blade);
+        culledBufferInfo.range = NUM_BLADES * sizeof(Blade);
 
         VkDescriptorBufferInfo indirectBufferInfo = {};
         indirectBufferInfo.buffer = scene->GetBlades()[i]->GetNumBladesBuffer();
@@ -478,7 +478,7 @@ void Renderer::CreateComputeDescriptorSets() {
         descriptorWrites[3 * i + 0].dstSet = computeDescriptorSets[i];
         descriptorWrites[3 * i + 0].dstBinding = 0;
         descriptorWrites[3 * i + 0].dstArrayElement = 0;
-        descriptorWrites[3 * i + 0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        descriptorWrites[3 * i + 0].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
         descriptorWrites[3 * i + 0].descriptorCount = 1;
         //only need one of three
         descriptorWrites[3 * i + 0].pBufferInfo = &inputBufferInfo;
@@ -489,7 +489,7 @@ void Renderer::CreateComputeDescriptorSets() {
         descriptorWrites[3 * i + 1].dstSet = computeDescriptorSets[i];
         descriptorWrites[3 * i + 1].dstBinding = 1;
         descriptorWrites[3 * i + 1].dstArrayElement = 0;
-        descriptorWrites[3 * i + 1].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        descriptorWrites[3 * i + 1].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
         descriptorWrites[3 * i + 1].descriptorCount = 1;
         //only need one of three
         descriptorWrites[3 * i + 1].pBufferInfo = &culledBufferInfo;
@@ -500,7 +500,7 @@ void Renderer::CreateComputeDescriptorSets() {
         descriptorWrites[3 * i + 2].dstSet = computeDescriptorSets[i];
         descriptorWrites[3 * i + 2].dstBinding = 2;
         descriptorWrites[3 * i + 2].dstArrayElement = 0;
-        descriptorWrites[3 * i + 2].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        descriptorWrites[3 * i + 2].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
         descriptorWrites[3 * i + 2].descriptorCount = 1;
         //only need one of three
         descriptorWrites[3 * i + 2].pBufferInfo = &indirectBufferInfo;
@@ -1037,9 +1037,11 @@ void Renderer::RecordComputeCommandBuffer() {
     vkCmdBindDescriptorSets(computeCommandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, computePipelineLayout, 1, 1, &timeDescriptorSet, 0, nullptr);
 
     // TODO: For each group of blades bind its descriptor set and dispatch
+    // helped by Yan
     for (uint32_t j = 0; j < scene->GetBlades().size(); ++j) {
 
-        vkCmdBindDescriptorSets(commandBuffers[j], VK_PIPELINE_BIND_POINT_COMPUTE, computePipelineLayout, 2 + j, 1, &computeDescriptorSets[j], 0, nullptr);
+        vkCmdBindDescriptorSets(computeCommandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, computePipelineLayout, 2, 1, &computeDescriptorSets[j], 0, nullptr);
+        vkCmdDispatch(computeCommandBuffer, NUM_BLADES / WORKGROUP_SIZE, 1, 1);
     }
 
     // ~ End recording ~

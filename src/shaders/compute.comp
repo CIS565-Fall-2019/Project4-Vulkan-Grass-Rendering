@@ -95,7 +95,8 @@ void main() {
 
 	//compute wind
 	//a very naive wind force function based on v0
-	vec3 wi = vec3(cos(v0.x), 0, sin(v0.z));
+	//vec3 wi = vec3(cos(v0.x), 0, sin(v0.z));
+    vec3 wi = vec3(cos(totalTime) + v0.x, 0, sin(totalTime) + v0.z);
 	//directional alignment
 	float fd = 1 - dot(normalize(wi), normalize(v2 - v0));
 	//height ratio
@@ -120,7 +121,7 @@ void main() {
 	//L1 sum of v0 to v1 and v1 to v2;
 	float L1 = length(v1 - v0) + length(v2 - v1);
 	//assume we are 2 degree bezier
-	float L = (2 * L0 + (2 - 1) * L1) / (2 +1);
+	float L = (2 * L0 + (3 - 1) * L1) / (3 +1);
 	float r = height / L;
 
 	//modify the v1 and v2 to the new appropriate position which have the same length as before
@@ -171,9 +172,11 @@ void main() {
 	result.v1 = vec4(v1, height);
 	result.v2 = vec4(v2, width);
 	result.up = vec4(up, stiffness);
-	//store the modified blade to output array and update vertexCount
-	culledBlades.output_blades[gl_GlobalInvocationID.x] = blades.input_blades[gl_GlobalInvocationID.x];
-	//when it works change to this
-	//culledBlades.output_blades[gl_GlobalInvocationID.x] = result;
-    atomicAdd(numBlades.vertexCount,1);
+
+    int index = atomicAdd(numBlades.vertexCount,1);
+
+    //store the modified blade to output array and update vertexCount
+    culledBlades.output_blades[index] = blades.input_blades[gl_GlobalInvocationID.x];
+    //when it works change to this
+    //culledBlades.output_blades[index] = result;
 }
