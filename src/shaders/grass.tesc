@@ -28,15 +28,15 @@ void main() {
 	out_v2[gl_InvocationID] = in_v2[gl_InvocationID];
 
 	// DONE: Set level of tessellation
-	// TODO base it on camera
-	mat4 invView = inverse(camera.view);
-	vec3 cameraPos = vec3(invView[3][0], invView[3][1], invView[3][2]);
-	float dist = length(cameraPos - vec3(camera.proj * camera.view * in_v0[gl_InvocationID])) / 50.0;
+	// TODO: base level of tessellation on distance from camera
+	//mat4 invView = inverse(camera.view);
+	//vec3 cameraPos = vec3(invView[3][0], invView[3][1], invView[3][2]);
+	//float dist = length(cameraPos - vec3(camera.proj * camera.view * in_v0[gl_InvocationID])) / 50.0;
 
-    gl_TessLevelInner[0] = 8;//int(ceil(mix(16, 2, dist)));
-	gl_TessLevelInner[1] = 8;//ceil(mix(16, 2, dist));
-    gl_TessLevelOuter[0] = 8;//ceil(mix(16, 2, dist));
-    gl_TessLevelOuter[1] = 8;//ceil(mix(16, 2, dist));
-    gl_TessLevelOuter[2] = 8;//ceil(mix(16, 2, dist));
-    gl_TessLevelOuter[3] = 8;//ceil(mix(16, 2, dist));
+    gl_TessLevelInner[0] = 2;
+	gl_TessLevelInner[1] = 8;
+    gl_TessLevelOuter[0] = 8;
+    gl_TessLevelOuter[1] = 2;
+    gl_TessLevelOuter[2] = 8;
+    gl_TessLevelOuter[3] = 8;
 }

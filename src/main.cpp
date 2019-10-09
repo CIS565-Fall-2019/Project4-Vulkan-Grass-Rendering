@@ -107,8 +107,8 @@ int main() {
     Image::FromFile(device,
         transferCommandPool,
 		// Note: for some reason, I had to use absolute paths to load any images besides the given one
-		//"images/grasss.jpg",
-        "C:/Users/caroline/Documents/CIS_565/Project4-Vulkan-Grass-Rendering/src/images/dirt.png",
+		"images/grasss.jpg",
+        //"C:/Users/caroline/Documents/CIS_565/Project4-Vulkan-Grass-Rendering/src/images/dirt.png",
         VK_FORMAT_R8G8B8A8_UNORM,
         VK_IMAGE_TILING_OPTIMAL,
         VK_IMAGE_USAGE_SAMPLED_BIT,
