@@ -50,6 +50,7 @@ void main() {
 
 	normal = normalize(vec4(n, 0.f));
 	float t = u - u * v * v;
+//	t = u + 0.5 * v - u * v;
 
 	vec3 pos = (1.f - t) * c0 + t * c1;
 
