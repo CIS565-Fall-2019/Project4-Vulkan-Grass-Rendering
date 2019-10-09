@@ -20,6 +20,19 @@ In this project I implemented a grass simulator and renderer using Vulkan. Each 
 * [RenderDoc blog on Vulkan](https://renderdoc.org/vulkan-in-30-minutes.html)
 * [Tessellation tutorial](http://in2gpu.com/2014/07/12/tessellation-tutorial-opengl-4-3/)
 
+## Demos
+Light Breeze           |  Sinusoidal Wind               | Radial Winds
+:-------------------------:|:-------------------------:|:-------------------------:
+![](img/LightBreeze.gif)| ![](img/video2.gif) |![](img/RadialWind.gif)
+
+The first example has relatively stiff blades of grass and a light breeze applied.  The wind distribution is purely based off of a Fractal Brownian Motion (FBM) noise function.
+
+The second is less stiff grass with sinusoidal functions added together to create the wind distribution. Some FBM noise is layered on top of the sinusoidal functions to add a more natural feel. For this example, I tried imitating a gif I had found online of grass:
+
+![](img/ReferenceGrass.gif)
+
+The final example contains 4 times as many blades as the first two, and the wind is distributed according to a radiating function. This is somewhat of a helicopter effect, as if a helicopter is landing in the center of the radiating wind.
+
 ## Implementation
 ### Pipeline Setup
 This project utilizes the Vulkan pipeline. Much of this pipeline was set up in the base code, getting to the point of a textured ground plane rendering with a simple, moveable camera setup. To render grass, I set up an additional grass descriptor set layout and descriptor set, as well as a compute descriptor set to pass in the appropriate data into the compute shader. 
@@ -62,6 +75,8 @@ Quadratic Blades             |  Triangular Blades
 I initially tried using lambertian shading based on the angle of the blade of grass, but this caused the color distrubition to be too varied. Because each blade is a flat plane, the orientation dramatically affects the lighting on it, causing all blades to have different tones of green, which does not look realistic. 
 
 ![](img/LambertianShading.PNG)
+
+Something I added for visual appeal was I changed the background color of the window to a sky blue, and changed the base texture from grass to dirt to place the grass in a more realistic setting.
 
 ### Physics
 The process of applying physics to the blades of grass involves calculating all forces that act upon the blades, and then updating the Bezier control points according to these forces. We are applying forces onto the third control point, `v2`, however there are measures we must take to ensure that when we apply the forces, we maintain certain properties: the blade must not fall through the ground plane, the length of the curved blade must be the same as the height of the blade to preserve length, and `v1` must be updated in relation to `v2`. 
@@ -106,7 +121,7 @@ Finally, the total force of gravity is the sum of the environmental gravity and 
 GravityForce = GravityEnvironmental + GravityFront
 ```
 
-With just gravity applied, the blades fall to the ground:
+With just gravity applied, the blades fall to the ground (the blades fall after a few seconds):
 
 ![](img/gravityOnly.gif)
 
@@ -123,7 +138,7 @@ With gravity and recovery only, the blades reach a state of equilibrium and do n
 ![](img/GravityAndRecovery.PNG)
 
 #### Wind
-The final force is the wind force. The wind force on each blade is determined by a function of the position of the base of each blade, wi(v0). This function defines the direction and strength of the wind at each point in space. For my wind functions, I used combinations of sinusoidal function and Fractal Brownian Motion noise. The noise breaks up some of the sinusoidal patterns in the wind.  
+The final force is the wind force. The wind force on each blade is determined by a function of the position of the base of each blade, wi(v0). This function defines the direction and strength of the wind at each point in space. For my wind functions, I used combinations of sinusoidal function and FBM noise. The noise breaks up some of the sinusoidal patterns in the wind.  
 
 We next need to see how the wind affects the blade based on its the blade's orientation. Note that a wind force acting perpendicular to the front face of the blade will have no affect on that blade, as it can only bend along its front face. The affect of the wind becomes stronger as the direction and the front face become more aligned. The calculation for the final wind force is the following: 
 
@@ -188,33 +203,3 @@ In fixing this same error, I lowered the number of blades to see what was happen
 Another error that produced an interesting result was accidentally using the length of `v0` in my force application.  This caused very large forces to be applied when `v0` was very close to the origin, giving this image:
 
 ![](img/TallCentralGrass.PNG)
-
-
-
-
-
-
-
-### Tessellating Bezier curves into grass blades
-
-** Extra Credit**: Tessellate to varying levels of detail as a function of how far the grass blade is from the camera. For example, if the blade is very far, only generate four vertices in the tessellation control shader.
-
-
-### Performance Analysis
-
-The performance analysis is where you will investigate how...
-* Your renderer handles varying numbers of grass blades
-* The improvement you get by culling using each of the three culling tests
-
-## Submit
-
-Open a GitHub pull request so that we can see that you have finished.
-The title should be "Project 6: YOUR NAME".
-The template of the comment section of your pull request is attached below, you can do some copy and paste:  
-
-* [Repo Link](https://link-to-your-repo)
-* (Briefly) Mentions features that you've completed. Especially those bells and whistles you want to highlight
-    * Feature 0
-    * Feature 1
-    * ...
-* Feedback on the project itself, if any.
