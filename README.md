@@ -122,7 +122,23 @@ Some blades are angled in such a way that they appear very thin in camera. If th
 ![](img/OrientationCulling.PNG)
 
 #### Frustum
+Not all blades are within sight of the camera at all times. There is no need to render blades that the camera cannot see, so we can cull these blades. To do this, we check the visibility of three points on the blade, `v0`, `v2`, and `m`, which is a midpoint on the curve calculated as `m = (1/4)v0 + (1/2)v1 + (1/4)v2`. If all three points are not visible, then we can cull the blade.
+
+To determine if a point is visible on camera, we project it into screen space and see if it falls within the bounds of the screen, with a small tolerance, as we want some buffer area around the screen to prevent seeing the blades disappear as the move off screen, as the curve may be off screen, but the blades have width, so their geometry might still be on screen.
+
+![](img/FrustumCulling.PNG)
+
 #### Distance
+Like with orientation culling, if a blade is very far fromm the camera, it may appear very small on screen, causing rendering artifacts. To reduce these artifacts, we cull blades based on their distance from camera. Rather than a sharp cutoff where blades go from being rendered to being culled a certain distance, we step the culling gradually in regions. We define a maximum distance and a number of regions. As the regions get further from camera, we cull increasingly more of the blades in that region. In the first region, no blades are culled, and in the last region all blades are culled, giving a smooth transition of blade density as we move farther from camera.
+
+Distance from camera is calculated as follows:
+
+![](img/DistanceCalculationForCulling.PNG)
+
+Culling is determined according to this distance and the defined regions:
+
+![](img/DistanceCulling.PNG)
+
 ## Performance Analysis
 
 
@@ -139,17 +155,6 @@ Another error that produced an interesting result was accidentally using the len
 
 ![](img/TallCentralGrass.PNG)
 
-
-#### View-frustum culling
-
-We also want to cull blades that are outside of the view-frustum, considering they won't show up in the frame anyway. To determine if
-a grass blade is in the view-frustum, we want to compare the visibility of three points: `v0, v2, and m`, where `m = (1/4)v0 * (1/2)v1 * (1/4)v2`.
-Notice that we aren't using `v1` for the visibility test. This is because the `v1` is a Bezier guide that doesn't represent a position on the grass blade.
-We instead use `m` to approximate the midpoint of our Bezier curve.
-
-If all three points are outside of the view-frustum, we will cull the grass blade. The paper uses a tolerance value for this test so that we are culling
-blades a little more conservatively. This can help with cases in which the Bezier curve is technically not visible, but we might be able to see the blade
-if we consider its width.
 
 #### Distance culling
 
