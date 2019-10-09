@@ -105,6 +105,14 @@ The recovery force is found by comparing the current position of `v2`, the third
 r = (iv2 - v2) * BladeStiffness.
 ```
 #### Wind
+The final force is the wind force. The wind force on each blade is determined by a function of the position of the base of each blade, wi(v0). This function defines the direction and strength of the wind at each point in space. For my wind functions, I used combinations of sinusoidal function and Fractal Brownian Motion noise. The noise breaks up some of the sinusoidal patterns in the wind.  
+
+We next need to see how the wind affects the blade based on its the blade's orientation. Note that a wind force acting perpendicular to the front face of the blade will have no affect on that blade, as it can only bend along its front face. The affect of the wind becomes stronger as the direction and the front face become more aligned. The calculation for the final wind force is the following: 
+
+![](img/WindCalculations.PNG)
+
+![](img/FinalWindForce.PNG)
+
 ### Culling
 #### Orientation
 #### Frustum
@@ -115,21 +123,6 @@ r = (iv2 - v2) * BladeStiffness.
 
 
 
-### Simulating Forces
-
-In this project, you will be simulating forces on grass blades while they are still Bezier curves. This will be done in a compute
-shader using the compute pipeline that has been created for you. Remember that `v2` is our physical guide, so we will be
-applying transformations to `v2` initially, then correcting for potential errors. We will finally update `v1` to maintain the appropriate
-length of our grass blade.
-
-
-#### Total force
-
-We can then determine a translation for `v2` based on the forces as `tv2 = (gravity + recovery + wind) * deltaTime`. However, we can't simply
-apply this translation and expect the simulation to be robust. Our forces might push `v2` under the ground! Similarly, moving `v2` but leaving
-`v1` in the same position will cause our grass blade to change length, which doesn't make sense.
-
-Read section 5.2 of the paper in order to learn how to determine the corrected final positions for `v1` and `v2`. 
 
 ### Culling tests
 
@@ -171,26 +164,8 @@ are culled with each farther bucket.
 
 ### Tessellating Bezier curves into grass blades
 
-In this project, you should pass in each Bezier curve as a single patch to be processed by your grass graphics pipeline. You will tessellate this patch into 
-a quad with a shape of your choosing (as long as it looks sufficiently like grass of course). The paper has some examples of grass shapes you can use as inspiration.
-
-In the tessellation control shader, specify the amount of tessellation you want to occur. Remember that you need to provide enough detail to create the curvature of a grass blade.
-
-The generated vertices will be passed to the tessellation evaluation shader, where you will place the vertices in world space, respecting the width, height, and orientation information
-of each blade. Once you have determined the world space position of each vector, make sure to set the output `gl_Position` in clip space!
-
 ** Extra Credit**: Tessellate to varying levels of detail as a function of how far the grass blade is from the camera. For example, if the blade is very far, only generate four vertices in the tessellation control shader.
 
-To build more intuition on how tessellation works, I highly recommend playing with the [helloTessellation sample](https://github.com/CIS565-Fall-2018/Vulkan-Samples/tree/master/samples/5_helloTessellation)
-and reading this [tutorial on tessellation](http://in2gpu.com/2014/07/12/tessellation-tutorial-opengl-4-3/).
-
-
-
-## README
-
-* A brief description of the project and the specific features you implemented.
-* GIFs of your project in its different stages with the different features being added incrementally.
-* A performance analysis (described below).
 
 ### Performance Analysis
 
@@ -199,10 +174,6 @@ The performance analysis is where you will investigate how...
 * The improvement you get by culling using each of the three culling tests
 
 ## Submit
-
-If you have modified any of the `CMakeLists.txt` files at all (aside from the
-list of `SOURCE_FILES`), mentions it explicity.
-Beware of any build issues discussed on the Google Group.
 
 Open a GitHub pull request so that we can see that you have finished.
 The title should be "Project 6: YOUR NAME".
