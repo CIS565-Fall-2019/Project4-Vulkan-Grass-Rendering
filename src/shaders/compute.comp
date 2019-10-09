@@ -94,7 +94,7 @@ void main() {
 	//compute wind
 	//a very naive wind force function based on v0
 	//vec3 wi = vec3(cos(v0.x), 0, sin(v0.z));
-    vec3 wi = vec3(cos(totalTime + v0.x * 0.2 + v0.z * 0.3) * 2, 0, 0);
+    vec3 wi = vec3(cos(totalTime + v0.x * 0.2 + v0.z * 0.3) * 3, 0, 0);
 	//vec3 wi = vec3(2,0,2);
 	//directional alignment
 	float fd = 1 - dot(normalize(wi), normalize(v2 - v0));
@@ -133,7 +133,7 @@ void main() {
 
 	//direction cull -- question how to get the orientation of camera from view matrix?
 	//get the camera orientation by view matrix
-	vec3 camera_orientation = vec3(camera.view[2][0], camera.view[2][1], camera.view[2][2]);
+	vec3 camera_orientation = vec3(camera.view[0][2], camera.view[1][2], camera.view[2][2]);
 	float dir_cull_thred = 0.9;
 	if(abs(dot(camera_orientation,width_dir)) > dir_cull_thred)
 	{
@@ -170,20 +170,21 @@ void main() {
 
 	//distance cull  -- how to get camera position form view matrix?
 	// transform the v0 and up to camera space -- not work..
-//	vec3 v0_cam = vec3(camera.proj * camera.view * vec4(v0,1.0));
-//	vec3 up_cam = vec3(camera.proj * camera.view * vec4(up,1.0));
-	vec3 camera_pos = vec3(camera.view[0][3], camera.view[1][3], camera.view[2][3]);
+	vec3 v0_cam = vec3(camera.view * vec4(v0,1.0));
+	vec3 up_cam = vec3(camera.view * vec4(up,0.0));
+	//vec3 camera_pos = vec3(-camera.view[3][0], -camera.view[3][1], -camera.view[3][2]);
 	//define dmax and n
-	uint n = 5;
-	float dmax = 5.0;
+	uint n = 8;
+	float dmax = 30.0;
 
-	float d_proj = length(v0 - camera_pos - up * dot((v0 - camera_pos), up));
+	//float d_proj = length(v0 - camera_pos - up * dot((v0 - camera_pos), up));
+	float d_proj = length(v0_cam - up_cam * dot(v0_cam , up_cam));
 	float dist_threshold = floor(n * ( 1 - (d_proj / dmax)));
-
-	if((gl_GlobalInvocationID.x % n) < dist_threshold)
+	if((gl_GlobalInvocationID.x % n) > dist_threshold)
 	{
 		return;
 	}
+
 
 
 	// TODO: Cull blades that are too far away or not in the camera frustum and write them
