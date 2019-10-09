@@ -33,7 +33,31 @@ The overall path of the pipeline is first the compute shader, where physics and 
 ### Blade Tessellation and Rendering
 ### Physics
 #### Gravity
+To apply gravity onto the grass blades, we start with a direction and magnitude for gravity, which we use to find the environmental gravity:
+```
+GravtityDirection = (0, -1, 0)
+GravityMagnitude = 9.8
+GravityEnvironmental = (0, -9.8, 0)
+```
+Because blades are represented as flat planes, they can only fall in one direction, the direction that they are facing. To find this direction, I converted the orientation of the blade into a direction vector with simple trigonometry:
+```
+BladeFacingDirection = (cos(orientation), 0, sin(orientation))
+```
+We then calculate how much gravity contributes with respect to this facing direction:
+```
+GravityFront = (1/4) * length(GravityEnvironmental) * BladeFacingDirection
+```
+Finally, the total force of gravity is the sum of the environmental gravity and the front facing gravity:
+```
+GravityForce = GravityEnvironmental + GravityFront
+```
 #### Recovery
+Blades of grass have some elastic stiffness to them, allowing them to remain mostly upright even in the presence of gravity. To represent this, we add a recovery force to counter the gravitational force. We use Hooke's law to simulate this.
+
+The recovery force is found by comparing the current position of `v2`, the third control point, to its original position at the start of the simulation, `iv2`. Knowing both `v2` and `iv2`, the recovery force is as follows: 
+```
+r = (iv2 - v2) * BladeStiffness.
+```
 #### Wind
 ### Culling
 #### Orientation
@@ -45,62 +69,6 @@ The overall path of the pipeline is first the compute shader, where physics and 
 
 
 
-## Requirements
-
-**Ask on the mailing list for any clarifications.**
-
-In this project, you are given the following code:
-
-* The basic setup for a Vulkan project, including the swapchain, physical device, logical device, and the pipelines described above.
-* Structs for some of the uniform buffers you will be using.
-* Some buffer creation utility functions.
-* A simple interactive camera using the mouse. 
-
-You need to implement the following features/pipeline stages:
-
-* Compute shader (`shaders/compute.comp`)
-* Grass pipeline stages
-  * Vertex shader (`shaders/grass.vert')
-  * Tessellation control shader (`shaders/grass.tesc`)
-  * Tessellation evaluation shader (`shaders/grass.tese`)
-  * Fragment shader (`shaders/grass.frag`)
-* Binding of any extra descriptors you may need
-
-See below for more guidance.
-
-## Base Code Tour
-
-Areas that you need to complete are
-marked with a `TODO` comment. Functions that are useful
-for reference are marked with the comment `CHECKITOUT`.
-
-* `src/main.cpp` is the entry point of our application.
-* `src/Instance.cpp` sets up the application state, initializes the Vulkan library, and contains functions that will create our
-physical and logical device handles.
-* `src/Device.cpp` manages the logical device and sets up the queues that our command buffers will be submitted to.
-* `src/Renderer.cpp` contains most of the rendering implementation, including Vulkan setup and resource creation. You will 
-likely have to make changes to this file in order to support changes to your pipelines.
-* `src/Camera.cpp` manages the camera state.
-* `src/Model.cpp` manages the state of the model that grass will be created on. Currently a plane is hardcoded, but feel free to 
-update this with arbitrary model loading!
-* `src/Blades.cpp` creates the control points corresponding to the grass blades. There are many parameters that you can play with
-here that will change the behavior of your rendered grass blades.
-* `src/Scene.cpp` manages the scene state, including the model, blades, and simualtion time.
-* `src/BufferUtils.cpp` provides helper functions for creating buffers to be used as descriptors.
-
-We left out descriptions for a couple files that you likely won't have to modify. Feel free to investigate them to understand their 
-importance within the scope of the project.
-
-## Grass Rendering
-
-This project is an implementation of the paper, [Responsive Real-Time Grass Rendering for General 3D Scenes](https://www.cg.tuwien.ac.at/research/publications/2017/JAHRMANN-2017-RRTG/JAHRMANN-2017-RRTG-draft.pdf).
-Please make sure to use this paper as a primary resource while implementing your grass renderers. It does a great job of explaining
-the key algorithms and math you will be using. Below is a brief description of the different components in chronological order of how your renderer will
-execute, but feel free to develop the components in whatever order you prefer.
-
-We recommend starting with trying to display the grass blades without any forces on them before trying to add any forces on the blades themselves. Here is an example of what that may look like:
-
-![](img/grass_basic.gif)
 
 ### Representing Grass as Bezier Curves
 
@@ -129,41 +97,6 @@ shader using the compute pipeline that has been created for you. Remember that `
 applying transformations to `v2` initially, then correcting for potential errors. We will finally update `v1` to maintain the appropriate
 length of our grass blade.
 
-#### Binding Resources
-
-In order to update the state of your grass blades on every frame, you will need to create a storage buffer to maintain the grass data.
-You will also need to pass information about how much time has passed in the simulation and the time since the last frame. To do this,
-you can extend or create descriptor sets that will be bound to the compute pipeline.
-
-#### Gravity
-
-Given a gravity direction, `D.xyz`, and the magnitude of acceleration, `D.w`, we can compute the environmental gravity in
-our scene as `gE = normalize(D.xyz) * D.w`.
-
-We then determine the contribution of the gravity with respect to the front facing direction of the blade, `f`, 
-as a term called the "front gravity". Front gravity is computed as `gF = (1/4) * ||gE|| * f`.
-
-We can then determine the total gravity on the grass blade as `g = gE + gF`.
-
-#### Recovery
-
-Recovery corresponds to the counter-force that brings our grass blade back into equilibrium. This is derived in the paper using Hooke's law.
-In order to determine the recovery force, we need to compare the current position of `v2` to its original position before
-simulation started, `iv2`. At the beginning of our simulation, `v1` and `v2` are initialized to be a distance of the blade height along the `up` vector.
-
-Once we have `iv2`, we can compute the recovery forces as `r = (iv2 - v2) * stiffness`.
-
-#### Wind
-
-In order to simulate wind, you are at liberty to create any wind function you want! In order to have something interesting,
-you can make the function depend on the position of `v0` and a function that changes with time. Consider using some combination
-of sine or cosine functions.
-
-Your wind function will determine a wind direction that is affecting the blade, but it is also worth noting that wind has a larger impact on
-grass blades whose forward directions are parallel to the wind direction. The paper describes this as a "wind alignment" term. We won't go 
-over the exact math here, but use the paper as a reference when implementing this. It does a great job of explaining this!
-
-Once you have a wind direction and a wind alignment term, your total wind force (`w`) will be `windDirection * windAlignment`.
 
 #### Total force
 
