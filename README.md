@@ -31,7 +31,53 @@ The compute descriptor set passes in three buffers to the compute shader. The fi
 The overall path of the pipeline is first the compute shader, where physics and culling are performed. The output data then goes to the grass vertex shader, which transforms the control points with the blade's model matrix. Then the tessellation control shader determines how finely to tesselate the blade. The tessellation evaluation shader shapes the tessellated blade. Finally, the fragment shader shades the blades, which are then rendered to the screen.
 
 ### Blade Tessellation and Rendering
+Each blade of grass is represented as a Bezier curve with three control points, `v0`, `v1`, and `v2`, where `v0` is the base position of the blade. `v1` always lies directly above `v0`, and `v2` is what we apply forces to to animate the grass. There is also an up vector, defining the up direcction of the surface the blades sit on. The vectors are all 4D vectors, where the 4th element holds another piece of information: height, width, stiffness, and orientation. The following image represents the blade model described:
+
+![](img/blade_model.jpg)
+
+The vectors get passed into the vertex shader, where they are transformed into model space using the model matrix of the group of blades. The base position, `v0`, gets passed as the gl_Position into the tessellation control shader. The control shader sets the tessellation levels and passes along the control points and gl_Position into the tessellation evaluation shader. The tessellation levels control how subdivided the tessellation will be, which affects how smooth the curves in the grass blades will be.
+
+The tessellation evaluation shader is where we shape the blades to curve along their Bezier curve and to have a grass blade shape along their width. To shape the blade along the Bezier curve defined by the control points, we perform a series of interpolations, following De Casteljau's algorithm:
+
+![](img/BezierEquations.PNG)
+
+We then use these interpolated values to find the final position of our current point in the tessellation:
+
+![](img/BezierPositionEquation.PNG)
+
+The t value in the above equation determines the shape of the blade of grass, acheiving any of the shapes pictures below:
+
+![](img/BladeShapes.PNG)
+
+Finally, this position is projected into screen space with the view projection matrix.
+
+The last step of the blade rendering is the fragment shader. This shader applies a gradient to the blades, making them dark green at their base and light green at the tips. This shading uses the height at the current portion of the blade. This height is a mix between the world space height and the individual blade space height. The world space height ensures that parts of the blades at the same height will have similar luminance. The blade space height ensures that even shorter blades still have some light green at their tips. The mixing of these two height spaces gives a more natural, varied look to the grass. 
+
+I initially tried using lambertian shading based on the angle of the blade of grass, but this caused the color distrubition to be too varied. Because each blade is a flat plane, the orientation dramatically affects the lighting on it, causing all blades to have different tones of green, which does not look realistic. 
+
 ### Physics
+The process of applying physics to the blades of grass involves calculating all forces that act upon the blades, and then updating the Bezier control points according to these forces. We are applying forces onto the third control point, `v2`, however there are measures we must take to ensure that when we apply the forces, we maintain certain properties: the blade must not fall through the ground plane, the length of the curved blade must be the same as the height of the blade to preserve length, and `v1` must be updated in relation to `v2`. 
+
+We start by finding the updated position for `v2`, ensuring that it is above ground:
+
+![](img/CurveUpdateStage1.PNG)
+
+To find the updated position of `v1`, which must always be directly above the base of the blade, we find the length of the projection of the blade onto the ground and use this to find `v1`:
+
+![](img/CurveUpdateStage2.PNG)
+
+![](img/CurveUpdateStage3.PNG)
+
+The final step is to ensure that the length of the curved blade is not longer than the height of the straight blade. We first evaluation the length of the Bezier curve:
+
+![](img/CurveUpdateStage4.PNG)
+
+Finally, we use this length and the height of the blade to set the final updated control points:
+
+![](img/CurveUpdateStage5.PNG)
+
+Below I describe how we calculate each of the forces that act on the blades of grass.
+
 #### Gravity
 To apply gravity onto the grass blades, we start with a direction and magnitude for gravity, which we use to find the environmental gravity:
 ```
@@ -68,27 +114,6 @@ r = (iv2 - v2) * BladeStiffness.
 
 
 
-
-
-### Representing Grass as Bezier Curves
-
-In this project, grass blades will be represented as Bezier curves while performing physics calculations and culling operations. 
-Each Bezier curve has three control points.
-* `v0`: the position of the grass blade on the geomtry
-* `v1`: a Bezier curve guide that is always "above" `v0` with respect to the grass blade's up vector (explained soon)
-* `v2`: a physical guide for which we simulate forces on
-
-We also need to store per-blade characteristics that will help us simulate and tessellate our grass blades correctly.
-* `up`: the blade's up vector, which corresponds to the normal of the geometry that the grass blade resides on at `v0`
-* Orientation: the orientation of the grass blade's face
-* Height: the height of the grass blade
-* Width: the width of the grass blade's face
-* Stiffness coefficient: the stiffness of our grass blade, which will affect the force computations on our blade
-
-We can pack all this data into four `vec4`s, such that `v0.w` holds orientation, `v1.w` holds height, `v2.w` holds width, and 
-`up.w` holds the stiffness coefficient.
-
-![](img/blade_model.jpg)
 
 ### Simulating Forces
 
