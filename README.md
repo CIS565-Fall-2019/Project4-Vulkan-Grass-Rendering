@@ -1,7 +1,9 @@
 **University of Pennsylvania, CIS 565: GPU Programming and Architecture,
 Vulkan Grass Rendering**
 
-![](img/video2.gif)
+<p align="center">
+  <img src="img/video2.gif">
+</p>
 
 * Grace Gilbert
   * gracelgilbert.com
@@ -20,6 +22,14 @@ In this project I implemented a grass simulator and renderer using Vulkan. Each 
 
 ## Implementation
 ### Pipeline Setup
+This project utilizes the Vulkan pipeline. Much of this pipeline was set up in the base code, getting to the point of a textured ground plane rendering with a simple, moveable camera setup. To render grass, I set up an additional grass descriptor set layout and descriptor set, as well as a compute descriptor set to pass in the appropriate data into the compute shader. 
+
+The grass descriptor set passes the model matrix for each group of grass blades into the grass rendering pipeline. This model matrix transforms all of the blades, ensuring that the patch of grass blades is located in the correct position.
+
+The compute descriptor set passes in three buffers to the compute shader. The first of these buffers is the input blades data, which holds the control points for each blade's Bezier curve, as well as the blades height, width, orientation, stiffness, and the up vector of the surface it sits on. This data is what gets modified to apply physics to the blades. Next is another buffer of blades which will contain the blades that remain after culling. This is the buffer whose data gets passed into the render pipeline, as these are the blades to be rendered. Initially, prior to implementing culling, this buffer just copied the input blades data.  Finally, the compute shader takes in a buffer that stores the number of remaining blades. Each non-culled blade increments this number using an atomic add. This number ensures that we render the right number of blades each frame. 
+
+The overall path of the pipeline is first the compute shader, where physics and culling are performed. The output data then goes to the grass vertex shader, which transforms the control points with the blade's model matrix. Then the tessellation control shader determines how finely to tesselate the blade. The tessellation evaluation shader shapes the tessellated blade. Finally, the fragment shader shades the blades, which are then rendered to the screen.
+
 ### Blade Tessellation and Rendering
 ### Physics
 #### Gravity
