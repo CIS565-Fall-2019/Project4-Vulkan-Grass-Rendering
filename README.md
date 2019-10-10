@@ -53,7 +53,7 @@ Vulkan implementation of  paper [Responsive Real-Time Grass Grass Rendering for 
 
 
 ### Performance Analysis
-* ![Culling Methods](img/cull_chart.png)
+* ![Culling Methods](img/cull_chart.PNG)
 
 
 
