@@ -35,6 +35,7 @@ direction and the strength of the wind at pos. There are also a directional alig
     <img src = img/dis.gif>
     </div>
 </p>
+
 * Lambert shading
 * LOD Tesselation : tessellate to varying levels of detail as a function of how far the grass blade is from the camera.
 
