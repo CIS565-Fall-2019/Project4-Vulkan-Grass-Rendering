@@ -1,0 +1,65 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="C:\Users\xjp83\Documents\GitHub\CIS565\Project4-Vulkan-Grass-Rendering\src\Blades.cpp" />
+    <ClCompile Include="C:\Users\xjp83\Documents\GitHub\CIS565\Project4-Vulkan-Grass-Rendering\src\BufferUtils.cpp" />
+    <ClCompile Include="C:\Users\xjp83\Documents\GitHub\CIS565\Project4-Vulkan-Grass-Rendering\src\Camera.cpp" />
+    <ClCompile Include="C:\Users\xjp83\Documents\GitHub\CIS565\Project4-Vulkan-Grass-Rendering\src\Device.cpp" />
+    <ClCompile Include="C:\Users\xjp83\Documents\GitHub\CIS565\Project4-Vulkan-Grass-Rendering\src\Image.cpp" />
+    <ClCompile Include="C:\Users\xjp83\Documents\GitHub\CIS565\Project4-Vulkan-Grass-Rendering\src\Instance.cpp" />
+    <ClCompile Include="C:\Users\xjp83\Documents\GitHub\CIS565\Project4-Vulkan-Grass-Rendering\src\Model.cpp" />
+    <ClCompile Include="C:\Users\xjp83\Documents\GitHub\CIS565\Project4-Vulkan-Grass-Rendering\src\Renderer.cpp" />
+    <ClCompile Include="C:\Users\xjp83\Documents\GitHub\CIS565\Project4-Vulkan-Grass-Rendering\src\Scene.cpp" />
+    <ClCompile Include="C:\Users\xjp83\Documents\GitHub\CIS565\Project4-Vulkan-Grass-Rendering\src\ShaderModule.cpp" />
+    <ClCompile Include="C:\Users\xjp83\Documents\GitHub\CIS565\Project4-Vulkan-Grass-Rendering\src\SwapChain.cpp" />
+    <ClCompile Include="C:\Users\xjp83\Documents\GitHub\CIS565\Project4-Vulkan-Grass-Rendering\src\Window.cpp" />
+    <ClCompile Include="C:\Users\xjp83\Documents\GitHub\CIS565\Project4-Vulkan-Grass-Rendering\src\main.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="C:\Users\xjp83\Documents\GitHub\CIS565\Project4-Vulkan-Grass-Rendering\src\Blades.h" />
+    <ClInclude Include="C:\Users\xjp83\Documents\GitHub\CIS565\Project4-Vulkan-Grass-Rendering\src\BufferUtils.h" />
+    <ClInclude Include="C:\Users\xjp83\Documents\GitHub\CIS565\Project4-Vulkan-Grass-Rendering\src\Camera.h" />
+    <ClInclude Include="C:\Users\xjp83\Documents\GitHub\CIS565\Project4-Vulkan-Grass-Rendering\src\Device.h" />
+    <ClInclude Include="C:\Users\xjp83\Documents\GitHub\CIS565\Project4-Vulkan-Grass-Rendering\src\Image.h" />
+    <ClInclude Include="C:\Users\xjp83\Documents\GitHub\CIS565\Project4-Vulkan-Grass-Rendering\src\Instance.h" />
+    <ClInclude Include="C:\Users\xjp83\Documents\GitHub\CIS565\Project4-Vulkan-Grass-Rendering\src\Model.h" />
+    <ClInclude Include="C:\Users\xjp83\Documents\GitHub\CIS565\Project4-Vulkan-Grass-Rendering\src\QueueFlags.h" />
+    <ClInclude Include="C:\Users\xjp83\Documents\GitHub\CIS565\Project4-Vulkan-Grass-Rendering\src\Renderer.h" />
+    <ClInclude Include="C:\Users\xjp83\Documents\GitHub\CIS565\Project4-Vulkan-Grass-Rendering\src\Scene.h" />
+    <ClInclude Include="C:\Users\xjp83\Documents\GitHub\CIS565\Project4-Vulkan-Grass-Rendering\src\ShaderModule.h" />
+    <ClInclude Include="C:\Users\xjp83\Documents\GitHub\CIS565\Project4-Vulkan-Grass-Rendering\src\SwapChain.h" />
+    <ClInclude Include="C:\Users\xjp83\Documents\GitHub\CIS565\Project4-Vulkan-Grass-Rendering\src\Vertex.h" />
+    <ClInclude Include="C:\Users\xjp83\Documents\GitHub\CIS565\Project4-Vulkan-Grass-Rendering\src\Window.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\xjp83\Documents\GitHub\CIS565\Project4-Vulkan-Grass-Rendering\src\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="C:\Users\xjp83\Documents\GitHub\CIS565\Project4-Vulkan-Grass-Rendering\src\shaders\compute.comp">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="C:\Users\xjp83\Documents\GitHub\CIS565\Project4-Vulkan-Grass-Rendering\src\shaders\graphics.frag">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="C:\Users\xjp83\Documents\GitHub\CIS565\Project4-Vulkan-Grass-Rendering\src\shaders\graphics.vert">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="C:\Users\xjp83\Documents\GitHub\CIS565\Project4-Vulkan-Grass-Rendering\src\shaders\grass.frag">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="C:\Users\xjp83\Documents\GitHub\CIS565\Project4-Vulkan-Grass-Rendering\src\shaders\grass.tesc">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="C:\Users\xjp83\Documents\GitHub\CIS565\Project4-Vulkan-Grass-Rendering\src\shaders\grass.tese">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="C:\Users\xjp83\Documents\GitHub\CIS565\Project4-Vulkan-Grass-Rendering\src\shaders\grass.vert">
+      <Filter>shaders</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="shaders">
+      <UniqueIdentifier>{EA0A608A-38A4-322D-8CC9-10AF4DC66A32}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

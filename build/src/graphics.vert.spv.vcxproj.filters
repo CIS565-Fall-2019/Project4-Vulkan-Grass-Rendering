@@ -1,0 +1,23 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\xjp83\Documents\GitHub\CIS565\Project4-Vulkan-Grass-Rendering\build\CMakeFiles\a9932b03be4a5cdaa73b966551202659\graphics.vert.spv.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\xjp83\Documents\GitHub\CIS565\Project4-Vulkan-Grass-Rendering\src\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="C:\Users\xjp83\Documents\GitHub\CIS565\Project4-Vulkan-Grass-Rendering\build\src\CMakeFiles\graphics.vert.spv" />
+    <None Include="C:\Users\xjp83\Documents\GitHub\CIS565\Project4-Vulkan-Grass-Rendering\src\shaders\graphics.vert">
+      <Filter>shaders</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{1A9FE301-93A2-32F6-9D2B-D7A52C2E7797}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="shaders">
+      <UniqueIdentifier>{EA0A608A-38A4-322D-8CC9-10AF4DC66A32}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
