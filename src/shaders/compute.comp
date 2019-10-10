@@ -60,11 +60,17 @@ void main() {
   vec3 v1 = thisblade.v1.xyz;
   vec3 v2 = thisblade.v2.xyz;
   vec3 up = thisblade.up.xyz;
+  vec4 v0h = vec4(v0, 1);
+  vec4 v2h = vec4(v2, 1);
+  vec4 uph = vec4(up, 1);
   float orientation = thisblade.v0.w;
   float height = thisblade.v1.w;
   float width = thisblade.v2.w;
   float stiffness = thisblade.up.w;
   vec3 ori = vec3(cos(orientation), 0, sin(orientation));
+  mat4 VP = camera.proj * camera.view;
+
+  /* ----PHYSICAL---- */
 
   // Gravity
   vec3 f = normalize(cross(up, ori));
@@ -76,8 +82,11 @@ void main() {
   vec3 I_v2 = v0 + height * up;
   vec3 recovery = (I_v2 - v2) * stiffness;
 
-  // Wind
+  // Wind Function
+//  vec3 w_i = vec3(sin(totalTime), 0, cos(totalTime));
   vec3 w_i = vec3(sin(totalTime), 0, cos(totalTime));
+  
+  // Wind
   float f_d = 1 - abs(length(w_i) * length(v2 - v0));
   float f_r = dot(v2 - v0, up) / height;
   vec3 wind = w_i * f_d * f_r;
@@ -104,41 +113,60 @@ void main() {
   thisblade.v2.xyz = v2;
   blades[gl_GlobalInvocationID.x] = thisblade;
 
-	// TODO: Cull blades that are too far away or not in the camera frustum and write them
-	// to the culled blades buffer
-	// Note: to do this, you will need to use an atomic operation to read and update numBlades.vertexCount
-	// You want to write the visible blades to the buffer without write conflicts between threads
+	/* ----CULLING---- */
+  const bool ORIENTATION_ENABLE = false;
+  const bool VIEW_FRUSTUM_ENABLE = false;
+  const bool DISTANCE_ENABLE = false;
   
   // Orientation Test
-  vec3 dir_c = (inverse(camera.view) * vec4(0, 0, 1, 0)).xyz;
-  dir_c.y = 0;
-  dir_c = normalize(dir_c);
-  vec3 dir_b = ori;
-  if (abs(dot(dir_c, dir_b)) < 0.5) {
-    return;
+  if (ORIENTATION_ENABLE) {
+    vec3 dir_c = normalize((inverse(camera.proj * camera.view) * vec4(0, 0, 1, 0)).xyz);
+    vec3 dir_b = normalize(ori);
+    if (abs(dot(dir_c, dir_b)) > 0.9) {
+      return;
+    }
   }
 
   // View-frustum Test
-  vec3 m = 0.25 * v0 + 0.5 * v1 + 0.25 * v2;
-  vec4 v0h = vec4(v0, 1);
-  vec4 v2h = vec4(v2, 1);
-  vec4 mh = vec4(m, 1);
+  if (VIEW_FRUSTUM_ENABLE) {
+    vec3 m = 0.25 * v0 + 0.5 * v1 + 0.25 * v2;
+    vec4 mh = vec4(m, 1);
 
-  vec4 v0h_prime = camera.view * v0h;
-  vec4 v2h_prime = camera.view * v2h;
-  vec4 mh_prime = camera.view * mh;
+    vec4 v0h_prime = VP * v0h;
+    vec4 v2h_prime = VP * v2h;
+    vec4 mh_prime = VP * mh;
 
-  float h_v0 = v0h_prime.w + 0.1;
-  float h_v2 = v2h_prime.w + 0.1;
-  float h_m = mh_prime.w + 0.1;
+    float h_v0 = v0h_prime.w + 0.1;
+    float h_v2 = v2h_prime.w + 0.1;
+    float h_m = mh_prime.w + 0.1;
 
-  if ((inBounds(v0h_prime.x, h_v0) && inBounds(v0h_prime.y, h_v0) && inBounds(v0h_prime.z, h_v0)) ||
-      (inBounds(v2h_prime.x, h_v2) && inBounds(v2h_prime.y, h_v2) && inBounds(v2h_prime.z, h_v2)) ||
-      (inBounds(mh_prime.x, h_m) && inBounds(mh_prime.y, h_m) && inBounds(mh_prime.z, h_m))) {
-    return;
+    bool v0_inbounds = (inBounds(v0h_prime.x, h_v0) && inBounds(v0h_prime.y, h_v0) && inBounds(v0h_prime.z, h_v0));
+    bool v2_inbounds = (inBounds(v2h_prime.x, h_v2) && inBounds(v2h_prime.y, h_v2) && inBounds(v2h_prime.z, h_v2));
+    bool m_inbounds = (inBounds(mh_prime.x, h_m) && inBounds(mh_prime.y, h_m) && inBounds(mh_prime.z, h_m));
+    if ( !v0_inbounds && !v2_inbounds && !m_inbounds) {
+      return;
+    }
   }
 
   // Distance Test
+  if (DISTANCE_ENABLE) {
+    const float MAX_DISTANCE = 20.0;
+    const int N_BUCKETS = 2;
+
+    bool culled_by_distance = false;
+    vec3 v0_proj = (camera.view * v0h).xyz / (camera.view * v0h).w;
+    vec3 up_proj = normalize((camera.view * uph).xyz);
+    float d_proj = length(v0_proj);
+    if (d_proj > MAX_DISTANCE) culled_by_distance = true;
+    if (!culled_by_distance) {
+      if (gl_GlobalInvocationID.x % N_BUCKETS > N_BUCKETS * (1 - (d_proj / MAX_DISTANCE))) {
+        culled_by_distance = true;
+      }
+    }
+    if (culled_by_distance) {
+      return;
+    }
+  }
 
 
   culledBlades[atomicAdd(numBlades.vertexCount, 1)] = thisblade;

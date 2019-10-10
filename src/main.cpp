@@ -5,6 +5,8 @@
 #include "Camera.h"
 #include "Scene.h"
 #include "Image.h"
+#include <ctime>
+#include <iostream>
 
 Device* device;
 SwapChain* swapChain;
@@ -67,7 +69,7 @@ namespace {
 
 int main() {
     static constexpr char* applicationName = "Vulkan Grass Rendering";
-    InitializeWindow(640, 480, applicationName);
+    InitializeWindow(1080, 1080, applicationName);
 
     unsigned int glfwExtensionCount = 0;
     const char** glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
@@ -143,10 +145,31 @@ int main() {
     glfwSetMouseButtonCallback(GetGLFWWindow(), mouseDownCallback);
     glfwSetCursorPosCallback(GetGLFWWindow(), mouseMoveCallback);
 
+    // FPS Counter
+    const int fps_buffer_size = 100;
+    std::clock_t start;
+    double duration, total, fps;
+    double fps_buffer[fps_buffer_size];
+    long frame_cnt = 0;
+
     while (!ShouldQuit()) {
+        start = std::clock();
+
         glfwPollEvents();
         scene->UpdateTime();
         renderer->Frame();
+
+        duration = (std::clock() - start) / (double)CLOCKS_PER_SEC;
+        fps_buffer[frame_cnt % fps_buffer_size] = duration;
+        if (frame_cnt > fps_buffer_size && (frame_cnt % fps_buffer_size) == 0) {
+            total = 0;
+            for (int i = 0; i < fps_buffer_size; i++) {
+                total += fps_buffer[i];
+            }
+            fps = 1.0 / (total / (float)fps_buffer_size);
+            std::cerr << "FPS: " << fps << std::endl;
+        }
+        frame_cnt++;
     }
 
     vkDeviceWaitIdle(device->GetVkDevice());
