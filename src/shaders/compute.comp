@@ -77,7 +77,10 @@ void main() {
   vec3 recovery = (I_v2 - v2) * stiffness;
 
   // Wind
-  vec3 wind = vec3(0,0,0);
+  vec3 w_i = vec3(sin(totalTime), 0, cos(totalTime));
+  float f_d = 1 - abs(length(w_i) * length(v2 - v0));
+  float f_r = dot(v2 - v0, up) / height;
+  vec3 wind = w_i * f_d * f_r;
 
   // Translate v2
   vec3 tv2 = (gravity + recovery + wind) * deltaTime;
@@ -93,10 +96,12 @@ void main() {
   float ratio = height / L;
   vec3 v1_corr = v0 + ratio * (v1 - v0);
   vec3 v2_corr = v1_corr + ratio * (v2 - v1);
+  v1 = v1_corr;
+  v2 = v2_corr;
 
   // Update this blade
-  thisblade.v1.xyz = v1_corr;
-  thisblade.v2.xyz = v2_corr;
+  thisblade.v1.xyz = v1;
+  thisblade.v2.xyz = v2;
   blades[gl_GlobalInvocationID.x] = thisblade;
 
 	// TODO: Cull blades that are too far away or not in the camera frustum and write them
@@ -104,5 +109,37 @@ void main() {
 	// Note: to do this, you will need to use an atomic operation to read and update numBlades.vertexCount
 	// You want to write the visible blades to the buffer without write conflicts between threads
   
+  // Orientation Test
+  vec3 dir_c = (inverse(camera.view) * vec4(0, 0, 1, 0)).xyz;
+  dir_c.y = 0;
+  dir_c = normalize(dir_c);
+  vec3 dir_b = ori;
+  if (abs(dot(dir_c, dir_b)) < 0.5) {
+    return;
+  }
+
+  // View-frustum Test
+  vec3 m = 0.25 * v0 + 0.5 * v1 + 0.25 * v2;
+  vec4 v0h = vec4(v0, 1);
+  vec4 v2h = vec4(v2, 1);
+  vec4 mh = vec4(m, 1);
+
+  vec4 v0h_prime = camera.view * v0h;
+  vec4 v2h_prime = camera.view * v2h;
+  vec4 mh_prime = camera.view * mh;
+
+  float h_v0 = v0h_prime.w + 0.1;
+  float h_v2 = v2h_prime.w + 0.1;
+  float h_m = mh_prime.w + 0.1;
+
+  if ((inBounds(v0h_prime.x, h_v0) && inBounds(v0h_prime.y, h_v0) && inBounds(v0h_prime.z, h_v0)) ||
+      (inBounds(v2h_prime.x, h_v2) && inBounds(v2h_prime.y, h_v2) && inBounds(v2h_prime.z, h_v2)) ||
+      (inBounds(mh_prime.x, h_m) && inBounds(mh_prime.y, h_m) && inBounds(mh_prime.z, h_m))) {
+    return;
+  }
+
+  // Distance Test
+
+
   culledBlades[atomicAdd(numBlades.vertexCount, 1)] = thisblade;
 }
