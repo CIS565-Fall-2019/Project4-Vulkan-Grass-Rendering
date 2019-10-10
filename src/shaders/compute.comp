@@ -56,6 +56,49 @@ void main() {
 
   Blade thisblade = blades[gl_GlobalInvocationID.x];
 
+  vec3 v0 = thisblade.v0.xyz;
+  vec3 v1 = thisblade.v1.xyz;
+  vec3 v2 = thisblade.v2.xyz;
+  vec3 up = thisblade.up.xyz;
+  float orientation = thisblade.v0.w;
+  float height = thisblade.v1.w;
+  float width = thisblade.v2.w;
+  float stiffness = thisblade.up.w;
+  vec3 ori = vec3(cos(orientation), 0, sin(orientation));
+
+  // Gravity
+  vec3 f = normalize(cross(up, ori));
+  vec3 gE = vec3(0, -9.8, 0);
+  vec3 gF = 0.2 * length(gE) * f;
+  vec3 gravity = gE + gF;
+
+  // Recovery
+  vec3 I_v2 = v0 + height * up;
+  vec3 recovery = (I_v2 - v2) * stiffness;
+
+  // Wind
+  vec3 wind = vec3(0,0,0);
+
+  // Translate v2
+  vec3 tv2 = (gravity + recovery + wind) * deltaTime;
+  v2 = thisblade.v2.xyz + tv2;
+
+  // State Validation
+  v2 = v2 - up * min(up * (v2 - v0), 0);
+  float l_proj = length(v2 - v0 - up * ((v2 - v0) * up));
+  v1 = v0 + height * up * max(1 - (l_proj / height), 0.05 * max(l_proj / height, 1));
+  float L0 = length(v2 - v0);
+  float L1 = length(v2 - v1) + length(v1 - v0);
+  float L = (2 * L0 + L1) / 3.0;
+  float ratio = height / L;
+  vec3 v1_corr = v0 + ratio * (v1 - v0);
+  vec3 v2_corr = v1_corr + ratio * (v2 - v1);
+
+  // Update this blade
+  thisblade.v1.xyz = v1_corr;
+  thisblade.v2.xyz = v2_corr;
+  blades[gl_GlobalInvocationID.x] = thisblade;
+
 	// TODO: Cull blades that are too far away or not in the camera frustum and write them
 	// to the culled blades buffer
 	// Note: to do this, you will need to use an atomic operation to read and update numBlades.vertexCount
