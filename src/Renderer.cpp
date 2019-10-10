@@ -479,12 +479,12 @@ void Renderer::CreateComputeDescriptorSets() {
 		VkDescriptorBufferInfo inputBufferInfo = {};
 		inputBufferInfo.buffer = scene->GetBlades()[i]->GetBladesBuffer();
 		inputBufferInfo.offset = 0;
-		inputBufferInfo.range = sizeof(Blade);
+		inputBufferInfo.range = NUM_BLADES * sizeof(Blade);
 
 		VkDescriptorBufferInfo culledBufferInfo = {};
 		culledBufferInfo.buffer = scene->GetBlades()[i]->GetCulledBladesBuffer();
 		culledBufferInfo.offset = 0;
-		culledBufferInfo.range = sizeof(Blade);
+		culledBufferInfo.range = NUM_BLADES * sizeof(Blade);
 
 		VkDescriptorBufferInfo indirectBufferInfo = {};
 		indirectBufferInfo.buffer = scene->GetBlades()[i]->GetNumBladesBuffer();
@@ -644,7 +644,7 @@ void Renderer::CreateGraphicsPipeline() {
     colorBlending.blendConstants[2] = 0.0f;
     colorBlending.blendConstants[3] = 0.0f;
 
-    std::vector<VkDescriptorSetLayout> descriptorSetLayouts = { cameraDescriptorSetLayout, modelDescriptorSetLayout, grassDescriptorSetLayout };
+    std::vector<VkDescriptorSetLayout> descriptorSetLayouts = { cameraDescriptorSetLayout, modelDescriptorSetLayout };
 
     // Pipeline layout: used to specify uniform values
     VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
@@ -818,7 +818,7 @@ void Renderer::CreateGrassPipeline() {
     colorBlending.blendConstants[2] = 0.0f;
     colorBlending.blendConstants[3] = 0.0f;
 
-    std::vector<VkDescriptorSetLayout> descriptorSetLayouts = { cameraDescriptorSetLayout, modelDescriptorSetLayout };
+    std::vector<VkDescriptorSetLayout> descriptorSetLayouts = { cameraDescriptorSetLayout, grassDescriptorSetLayout };
 
     // Pipeline layout: used to specify uniform values
     VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
@@ -1049,7 +1049,8 @@ void Renderer::RecordComputeCommandBuffer() {
 
     // TODO: For each group of blades bind its descriptor set and dispatch
 	for (int i = 0; i < scene->GetBlades().size(); i++) {
-		vkCmdBindDescriptorSets(computeCommandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, computePipelineLayout, 2 + i, 1, &grassDescriptorSets[i], 0, nullptr);
+		vkCmdBindDescriptorSets(computeCommandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, computePipelineLayout, 2 + i, 1, &computeDescriptorSets[i], 0, nullptr);
+		vkCmdDispatch(computeCommandBuffer, (int)ceil((NUM_BLADES + WORKGROUP_SIZE - 1) / WORKGROUP_SIZE), 1, 1);
 	}
 
     // ~ End recording ~
