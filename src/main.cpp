@@ -1,4 +1,5 @@
 #include <vulkan/vulkan.h>
+#include <sstream>
 #include "Instance.h"
 #include "Window.h"
 #include "Renderer.h"
@@ -107,7 +108,7 @@ int main() {
     Image::FromFile(device,
         transferCommandPool,
 		// Note: for some reason, I had to use absolute paths to load any images besides the given one
-		"images/grasss.jpg",
+		"images/grass.jpg",
         //"C:/Users/caroline/Documents/CIS_565/Project4-Vulkan-Grass-Rendering/src/images/dirt.png",
         VK_FORMAT_R8G8B8A8_UNORM,
         VK_IMAGE_TILING_OPTIMAL,
@@ -145,8 +146,29 @@ int main() {
     glfwSetMouseButtonCallback(GetGLFWWindow(), mouseDownCallback);
     glfwSetCursorPosCallback(GetGLFWWindow(), mouseMoveCallback);
 
+	double fps = 0;
+	double timebase = 0;
+	int frame = 0;
+
     while (!ShouldQuit()) {
         glfwPollEvents();
+
+		frame++;
+		double time = glfwGetTime();
+
+		if (time - timebase > 1.0) {
+			fps = frame / (time - timebase);
+			timebase = time;
+			frame = 0;
+		}
+
+		std::ostringstream ss;
+		ss << "[";
+		ss.precision(1);
+		ss << std::fixed << fps;
+		ss << " fps] ";
+		glfwSetWindowTitle(GetGLFWWindow(), ss.str().c_str());
+
         scene->UpdateTime();
         renderer->Frame();
     }
