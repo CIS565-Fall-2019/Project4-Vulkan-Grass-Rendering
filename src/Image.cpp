@@ -5,6 +5,7 @@
 #include "Device.h"
 #include "Instance.h"
 #include "BufferUtils.h"
+#include <iostream>
 
 void Image::Create(Device* device, uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory) {
     // Create Vulkan image
@@ -200,7 +201,9 @@ void Image::FromFile(Device* device, VkCommandPool commandPool, const char* path
     VkDeviceSize imageSize = texWidth * texHeight * 4;
 
     if (!pixels) {
-        throw std::runtime_error("Failed to load texture image");
+        //throw std::runtime_error("Failed to load texture image");
+		std::cout << stbi_failure_reason() << std::endl;
+        throw std::runtime_error(stbi_failure_reason());
     }
 
     // Create staging buffer
