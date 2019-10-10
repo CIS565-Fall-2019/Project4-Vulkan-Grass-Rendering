@@ -84,7 +84,7 @@ void main() {
 
   // Wind Function
 //  vec3 w_i = vec3(sin(totalTime), 0, cos(totalTime));
-  vec3 w_i = vec3(sin(totalTime), 0, cos(totalTime));
+  vec3 w_i = vec3(sin(totalTime + v0.x * 0.2), 0, 0.5 * cos(totalTime + v0.z * 0.1));
   
   // Wind
   float f_d = 1 - abs(length(w_i) * length(v2 - v0));
