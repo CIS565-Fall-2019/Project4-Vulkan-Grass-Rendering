@@ -40,11 +40,17 @@ In the compute shader, all of these forces were computed, summed, multiplied by 
 
 ![](img/distanceCull.gif)
 
+Here is a chart comparing the performance benefit of each of the culling optimizations. I'm not extremely confident in these numbers because it was very difficult to measure performance in points of view of the grass mass that did not bias one type of culling or another. In any case, the distance culling does seem to be substantially more successful than the other two, which I believe is a result of the fact that distance culling is at work in all views, whereas view-frustum culling is of no use when the full mass of grass is visible.
+
+![](img/perfCulling.JPG)
+
 ## Performance vs Number of Blades
 
+Below is a chart of the average frame render time vs the number of blades rendered using all forces and culling implemented. It seems to be a power relationship. It is evident that an increase in the number of blades has a detriment on the performance which is worse than a linear relationship. It's probable that this relationship is much more dramatic when no culling optimizations are used. The optimizations definitely become more useful as the number of blades increases so this may contribute to why the relationship is almost linear.
 
+![](img/overallPerf.JPG)
 
-###Instructions - Vulkan Grass Rendering
+### Instructions - Vulkan Grass Rendering
 
 This is due **Wednesday 10/9, evening at midnight**.
 
