@@ -17,7 +17,7 @@ This project is based on the paper [Responsive Real-Time Grass Grass Rendering f
 * Forces \
 _gravity_ : consists of environmental gravity (`gE`) and front gravity (`gF = (1/4) * ||gE|| * f`, where `f` is the front facing direction of the blade) \
 _recovery_ : a elastic force that brings the grass blade back into equilibrium (`r = (initial_pos - curr_pos) * stiffness`) \
-_wind_ : use the wind function wi(pos) = vec3(0.5, sin(pos.x + pos.y + time), 0.5) to represents the
+_wind_ : use the wind function `wi(pos) = vec3(0.5, sin(pos.x + pos.y + time), 0.5)` to represents the
 direction and the strength of the wind at pos. There are also a directional alignment term and a height ratio term to scale the wind force according to the height and orientation of the blade.
 
 * Orientation Culling : cull the blade when the front face direction is perpendicular to the view vector.
