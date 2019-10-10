@@ -1,5 +1,56 @@
-Instructions - Vulkan Grass Rendering
+University of Pennsylvania, CIS 565: GPU Programming and Architecture,
+Project 4 - Vulkan Grass Rendering
 ========================
+
+* Tabatha Hickman
+  * LinkedIn: https://www.linkedin.com/in/tabatha-hickman-335987140/
+* Tested on: Windows 10 Pro, i7-5600U CPU @ 2.60GHz 16GB, GeForce 840M (personal computer)
+
+![](img/withWind.gif)
+
+This project involved simulating and rendering a large quantity of blades of grass using Vulkan. The simulation and several optimizations used in the project are described in the paper, [Responsive Real-Time Grass Rendering for General 3D Scenes](https://www.cg.tuwien.ac.at/research/publications/2017/JAHRMANN-2017-RRTG/JAHRMANN-2017-RRTG-draft.pdf). The general pipeline which will be described in further detail includes a compute shader where vertex positions are modified based on forces and blades are culled as necessary, a vertex shader for the grass blades, a tessellation control shader which prepares the vertex information to be tesselated using input inner and outer tesselation levels, a tesselation evaluation shader where given computed tesselation coordinates are used to find the positions of points on the blade, and a fragment shader to color the blades.
+
+## Blade Geometry and Tesselation
+
+Each blade in the simulation is represented by a Bezier curve with three control points. The blades also contain information about the direction of their height and width, the value of their height and width, and the stiffness of the blade. This information is passed into the tesselation control shader from the vertex shader. In the tesselation control shader we set the inner and outer levels of tesselation. In this case, since the blade will curve along its height and its height is much greater than its width, inner level 1 is much greater than inner level 0 and outer levels 0 and 2 are much greater than outer levels 1 and 3. (Inner level 1 and outer levels 0 and 2 relate to the vertical dimension of the blade, while the other relate to the horizontal.) After the tesselation control shader completes, the tesselation engine, which cannot be modified, computes the tesselation. Then in the tesselation evaluation shader, per tesselation coordinate positions are computed using bilinear interpolation and equations to mold the blade into a specific shape. I used the triangle-tip shape provided in the paper for my simulation. The tesselation evaluation shader also sets gl_Position for this coordinate using camera matrices to project the point into camera space. Finally, I pass the normal of the point and the height coordinate from tesselation on to the fragment shader. Here I color the blades by interpolating between a darker and lighter green, with the darker closer to the plane. I also attempted Lambertian shading using the normals, but I didn't like the artifacts I was getting toward the tips of the grass so I took it out. Below is the result of this work.
+
+![](img/geomNoForces.JPG)
+
+## Simulating Forces 
+
+**Gravity:** The first and most basic force added was gravity. An environmental gravity was clculated by multiplying the direction of the force by its magnitude. This was added to the contribution of gravity with respect to the front face of the blade. That force made sure the blades would fall such that they curved in the direction of the front face. Below is the result of adding just this force.
+
+![](img/withGravity.JPG)
+
+**Recovery:** Since grass often has some resilience to the forces acting on it, a recovery force is added that inclines the blade toward its initial position. This is easy because the initial position of the blade's tip is simply the blade's height over its base position. Adding this force, I got this result.
+
+![](img/withRecovery.JPG)
+
+**Wind:** Finally, wind is added to keep the simulation lively. I made my wind direction a function of the time which has elapsed since the beginning of the simulation. The direction has a magnitude in the x direction related to the cos of that time, and in the z direction related to the sin of that time. This creates a subtle circular repetitive motion. Because wind acts more powerfully on blades of grass which directly face its direction vs blades that are perpendicular, we multiply the wind direction by a wind alignment term defined in the paper. This term is a combination of the relative direction of the blade's front and the wind (computed with a dot product) and the uprightness of the blade calculated by comparing the height of the tip of the blade to its initial height. After adding this force, I got something like the motion seen in the gif at the top of the page.
+
+In the compute shader, all of these forces were computed, summed, multiplied by the delta time since the last update, and added to the position of the tip of the blade. Then several calculations are made to correct this translation in order to preserve the positioning and length of the blade. The tip is constrained to stay above the ground plane, the second (invisible) control point is recalculated, and then both are reduced by the ratio between the prescribed length and the proposed length.
+
+## Culling Optimizations
+
+**Orientation Culling:** Blades whose front faces perpendicular to the camera are barely seen because the blades have no width, which can cause aliasing artifacts. This culling removes any blades which face to perpendicularly to the camera, using a dot product between the view vector and the face direction to decide.
+
+**View-Frustum Culling:** In this culling, we are simply foregoing the tessellation and other computations for blades which are outside the camera's view and thus are not seen in the render. We do this by projecting the base, tip and midpoints of the blade into NDC space and culling if all three points are outside the homogeneous coordinate plus an additional tolerance.
+
+**Distance Culling:** Here we want to skip rendering blades which are too far from the camera to be seen. A max distance past which blades will not be rendered is set and a number of buckets for incremental culling is set. Then, we cull any blades past the max distance and b out of n blades for every bucket b between the camera and that max distance. Here is a gif showing a rather extreme example of this culling. In this case I set the max distance to 30 and there are 6 buckets.
+
+![](img/distanceCull.gif)
+
+Here is a chart comparing the performance benefit of each of the culling optimizations. I'm not extremely confident in these numbers because it was very difficult to measure performance in points of view of the grass mass that did not bias one type of culling or another. In any case, the distance culling does seem to be substantially more successful than the other two, which I believe is a result of the fact that distance culling is at work in all views, whereas view-frustum culling is of no use when the full mass of grass is visible.
+
+![](img/perfCulling.JPG)
+
+## Performance vs Number of Blades
+
+Below is a chart of the average frame render time vs the number of blades rendered using all forces and culling implemented. It seems to be a power relationship. It is evident that an increase in the number of blades has a detriment on the performance which is worse than a linear relationship. It's probable that this relationship is much more dramatic when no culling optimizations are used. The optimizations definitely become more useful as the number of blades increases so this may contribute to why the relationship is almost linear.
+
+![](img/overallPerf.JPG)
+
+### Instructions - Vulkan Grass Rendering
 
 This is due **Wednesday 10/9, evening at midnight**.
 
