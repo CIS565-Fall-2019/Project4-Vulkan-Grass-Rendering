@@ -30,6 +30,11 @@ direction and the strength of the wind at pos. There are also a directional alig
 
 * View-Frustum Culling : cull blades that are outside of the view-frustum.
 * Distance Culling : cull blades that are too far.
+<p align="center">
+    <div style = "padding:0px 10px 0px 40px;">
+    <img src = img/dis.gif>
+    </div>
+</p>
 * Lambert shading
 * LOD Tesselation : tessellate to varying levels of detail as a function of how far the grass blade is from the camera.
 
