@@ -57,5 +57,9 @@ Vulkan implementation of  paper [Responsive Real-Time Grass Grass Rendering for 
 
 
 
+![Culling Methods](img/blades_chart.PNG)
+
+
+
 ### References
 *  [Responsive Real-Time Grass Grass Rendering for General 3D Scenes](https://www.cg.tuwien.ac.at/research/publications/2017/JAHRMANN-2017-RRTG/JAHRMANN-2017-RRTG-draft.pdf)
