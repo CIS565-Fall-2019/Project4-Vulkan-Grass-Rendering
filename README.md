@@ -43,7 +43,7 @@ My result
 
 Super fun part: I enjoyed playing with all the color options 
 
-![](img/5-first-col.PNG) ![](img/5-frag-w-lamb.PNG) ![](img/5-frag-wOut-lamb.PNG)
+![](img/5-frag-w-lamb.PNG)  ![](img/5-frag-wOut-lamb.PNG)
 
 ## Physics
 
@@ -94,7 +94,7 @@ Bucket 4 is between distances [21, 28) and every other blade is culled.
 
 The picture on the left below includes the bucket-based culling; for comparison, the right image only culls after 28 units.
 
-![](img/cullBuckets.gif) ![](img/justDist.gif)
+![](img/cullBuckets.gif)    ![](img/justDist.gif)
 
 ## Performance Analysis
 
