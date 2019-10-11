@@ -63,7 +63,8 @@ void main() {
 	vec3 v2 = b[gl_GlobalInvocationID.x].v2.xyz;
 	vec3 up = b[gl_GlobalInvocationID.x].up.xyz;
 
-	vec3 f = normalize(vec3(sin(orientation), 0, cos(orientation)));
+	vec3 dir = normalize(vec3(cos(orientation), 0, sin(orientation)));
+	vec3 f = cross(dir, up);
 	float gravityStrength = 9.8f;
 	vec3 g = gravityStrength * vec3(0, -1, 0) + gravityStrength * 0.25f * f;
 
@@ -93,6 +94,49 @@ void main() {
 	// to the culled blades buffer
 	// Note: to do this, you will need to use an atomic operation to read and update numBlades.vertexCount
 	// You want to write the visible blades to the buffer without write conflicts between threads
-	c[gl_GlobalInvocationID.x] = b[gl_GlobalInvocationID.x];
-	atomicAdd(numBlades.vertexCount, 1);
+	bool flag = true;
+	vec3 cameraDir = vec3(inverse(camera.view) * vec4(0, 0, -1, 0));
+	cameraDir = normalize(vec3(cameraDir.x, 0, cameraDir.z));
+	if (abs(dot(cameraDir, f)) < 0.1) {
+		flag = false;
+	}
+	if (flag) {
+		float maxDist = 60;
+		int numBuckets = 10;
+		vec3 eye = vec3(inverse(camera.view) * vec4(0, 0, 0, 1));
+		float MIN_HEIGHT = 1.3f; // Copied from Blades.h
+		float MAX_HEIGHT = 2.5f; // Copied from Blades.h
+		float dist = length(eye - v0);
+		for (int i = 0; i <= numBuckets; i++) {
+			float bucketDist = maxDist / numBuckets;
+			if (dist < bucketDist * i) {
+				float rng = (height - MIN_HEIGHT) / (MAX_HEIGHT - MIN_HEIGHT);
+				if (rng < float(i) / float(numBuckets)) {
+					flag = false;
+				}
+				break;
+			}
+		}
+		if (dist > maxDist) {
+			flag = false;
+		}
+	}
+	if (flag) {
+		vec3 m = (1/4) * v0 * (1/2) * v1 * (1/4) * v2;
+		vec3 v0Screen = vec3(vec4(v0, 1) * inverse(camera.view) * inverse(camera.proj));
+		vec3 mScreen = vec3(vec4(m, 1) * inverse(camera.view) * inverse(camera.proj));
+		vec3 v2Screen = vec3(vec4(v2, 1) * inverse(camera.view) * inverse(camera.proj));
+		float frustumBounds = 1;
+		if (
+			(v0Screen.x < -frustumBounds || v0Screen.x > frustumBounds || v0Screen.y < -frustumBounds || v0Screen.y > frustumBounds)
+			&& (mScreen.x < -frustumBounds || mScreen.x > frustumBounds || mScreen.y < -frustumBounds || mScreen.y > frustumBounds)
+			&& (v2Screen.x < -frustumBounds || v2Screen.x > frustumBounds || v2Screen.y < -frustumBounds || v2Screen.y > frustumBounds)
+		) {
+			flag = false;
+		}
+	}
+	if (flag) {
+		uint prevIndex = atomicAdd(numBlades.vertexCount, 1);
+		c[prevIndex] = b[gl_GlobalInvocationID.x];
+	}
 }
