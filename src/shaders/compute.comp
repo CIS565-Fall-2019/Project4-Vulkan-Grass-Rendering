@@ -29,28 +29,110 @@ struct Blade {
 // The project is using vkCmdDrawIndirect to use a buffer as the arguments for a draw call
 // This is sort of an advanced feature so we've showed you what this buffer should look like
 //
-// layout(set = ???, binding = ???) buffer NumBlades {
-// 	  uint vertexCount;   // Write the number of blades remaining here
-// 	  uint instanceCount; // = 1
-// 	  uint firstVertex;   // = 0
-// 	  uint firstInstance; // = 0
-// } numBlades;
+layout(set = 2, binding = 0) buffer InputBlades {
+	  Blade bladeAt[];
+} inputBlades;
+
+layout(set = 2, binding = 1) buffer CulledBlades {
+	  Blade bladeAt[];
+} culledBlades;
+
+layout(set = 2, binding = 2) buffer NumBlades {
+	  uint vertexCount;   // Write the number of blades remaining here
+	  uint instanceCount; // = 1
+	  uint firstVertex;   // = 0
+	  uint firstInstance; // = 0
+} numBlades;
 
 bool inBounds(float value, float bounds) {
     return (value >= -bounds) && (value <= bounds);
 }
 
+vec3 windDir = normalize(vec3(2.5f, 0.f, 4.f));
+
+float windIntensity(vec3 v) {
+	float strength = sin(v.x * windDir.x * 10.f + totalTime) + 
+					 cos(v.z * windDir.z * 10.f + totalTime) + 1.8f;
+	return strength * strength * 50.f;
+}
+
 void main() {
 	// Reset the number of blades to 0
 	if (gl_GlobalInvocationID.x == 0) {
-		// numBlades.vertexCount = 0;
+		numBlades.vertexCount = 0;
 	}
 	barrier(); // Wait till all threads reach this point
 
+	int totBlades = int(atomicAdd(numBlades.vertexCount, 1));
+	Blade currBlade = inputBlades.bladeAt[gl_GlobalInvocationID.x];
+
     // TODO: Apply forces on every blade and update the vertices in the buffer
+
+	// GRAVITY***
+	// Environmental:
+	vec3 gravDir = vec3(0.f, -1.f, 0.f);
+	float accel = 9.80665;
+
+	vec3 gE = gravDir * accel;
+
+	// Front Gravity:
+	vec3 bitangent = vec3(sin(currBlade.v0.w), 0.f, cos(currBlade.v0.w)); // Same as grass.tese
+	vec3 f = cross(currBlade.up.xyz, bitangent);
+	vec3 gF = 0.25f * length(gE) * normalize(f);
+
+	// Total
+	vec3 g = gE + gF;
+
+
+	// RECOVERY***
+	vec3 iv2 = currBlade.v0.xyz + normalize(currBlade.up.xyz) * currBlade.v1.w; // Up scaled by height
+	vec3 r = (iv2 - currBlade.v2.xyz) * currBlade.up.w; // Difference multiplied by stiffness
+
+
+	// WIND***
+	vec3 wi = windDir * windIntensity(currBlade.v0.xyz);
+	vec3 diff = currBlade.v2.xyz - currBlade.v0.xyz;
+
+	float fd = 1.f - abs(dot(wi / length(wi), diff / length(diff)));
+	float fr = dot(diff, currBlade.up.xyz) / currBlade.v1.w;
+	float theta = fd * fr;
+
+	// Resulting force
+	vec3 w = wi * theta;
+
+
+	// TOTAL FORCE***
+	vec3 tv2 = (g + r + w) * deltaTime;
+	currBlade.v2.xyz += tv2;
+
+	// Ensure above ground
+	currBlade.v2.xyz = currBlade.v2.xyz - currBlade.up.xyz * 
+				min(dot(currBlade.up.xyz, currBlade.v2.xyz - currBlade.v0.xyz), 0.f);
+	
+	// Update v1
+	float lProj = length(currBlade.v2.xyz - currBlade.v0.xyz - currBlade.up.xyz * 
+					dot(currBlade.v2.xyz - currBlade.v0.xyz, currBlade.up.xyz));
+
+	currBlade.v1.xyz = currBlade.v0.xyz + currBlade.v1.w * currBlade.up.xyz * 
+					max(1.f - lProj / currBlade.v1.w, 0.05f * max(lProj / currBlade.v1.w, 1.f));
+
+	// Length update
+	float l0 = length(currBlade.v2.xyz - currBlade.v0.xyz);
+	float l1 = length(currBlade.v1.xyz - currBlade.v0.xyz) +
+			   length(currBlade.v2.xyz - currBlade.v1.xyz);
+	float l = (2.f * l0 + l1) / 3.f;  // Simplified since there's only two control points
+
+	float rl = currBlade.v1.w / l;
+
+	// Final update:
+	//inputBlades.bladeAt[gl_GlobalInvocationID.x]
+	currBlade.v1.xyz = currBlade.v0.xyz + rl * (currBlade.v1.xyz - currBlade.v0.xyz);
+	currBlade.v2.xyz = currBlade.v1.xyz + rl * (currBlade.v2.xyz - currBlade.v1.xyz);
 
 	// TODO: Cull blades that are too far away or not in the camera frustum and write them
 	// to the culled blades buffer
 	// Note: to do this, you will need to use an atomic operation to read and update numBlades.vertexCount
 	// You want to write the visible blades to the buffer without write conflicts between threads
+
+	culledBlades.bladeAt[totBlades] = inputBlades.bladeAt[gl_GlobalInvocationID.x];
 }
