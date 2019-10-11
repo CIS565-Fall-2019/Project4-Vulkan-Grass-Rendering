@@ -53,13 +53,16 @@ Vulkan implementation of  paper [Responsive Real-Time Grass Grass Rendering for 
 
 
 ### Performance Analysis
-* ![Culling Methods](img/cull_chart.PNG)
+![Culling Methods](img/cull_chart.PNG)
+With all culling methods combined, I observed a signifianct improvement in performance. A few points worthy mentioning here:
+* View-frustum culling has large impact when we zoom in close to the grass filed when a lot of blades ended up outside the view-frustum. 
+* Distance cullling works great when we zoom out and when more blades are far away from the camera. 
+* Orientation culling improved the FPS slightly. The reason is that the number of blades that happen to parallel (or close to parallel) with view direction is limited.
 
 
+![Number of blades](img/blades_chart.PNG)
 
-![Culling Methods](img/blades_chart.PNG)
-
-
+* Obviously, with more blades, the performance drops. The bottleneck is more likely occur in the computation unit rather than the memory bandwidth since most of the data reside in device memory after the rendering begins.
 
 ### References
 *  [Responsive Real-Time Grass Grass Rendering for General 3D Scenes](https://www.cg.tuwien.ac.at/research/publications/2017/JAHRMANN-2017-RRTG/JAHRMANN-2017-RRTG-draft.pdf)
