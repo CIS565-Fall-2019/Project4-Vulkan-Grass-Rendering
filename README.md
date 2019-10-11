@@ -1,23 +1,18 @@
 Instructions - Vulkan Grass Rendering
 ========================
 
-This is due **Wednesday 10/9, evening at midnight**.
+**University of Pennsylvania, CIS 565: GPU Programming and Architecture, Project 3**
 
-**QUICK NOTE**: Please use `git clone --recursive` when cloning this repo as there are submodules which need to be cloned as well.
+* Alexis Ward
+  * [LinkedIn](https://www.linkedin.com/in/alexis-ward47/), [personal website](https://www.alexis-ward.tech/)
+* Tested on: Windows 10, i7-8750H CPU @ 2.20GHz 16GB, GTX 1050 Ti 
+
+![](img/main.gif)
+
+# README
 
 **Summary:**
-In this project, you will use Vulkan to implement a grass simulator and renderer. You will
-use compute shaders to perform physics calculations on Bezier curves that represent individual
-grass blades in your application. Since rendering every grass blade on every frame will is fairly
-inefficient, you will also use compute shaders to cull grass blades that don't contribute to a given frame.
-The remaining blades will be passed to a graphics pipeline, in which you will write several shaders.
-You will write a vertex shader to transform Bezier control points, tessellation shaders to dynamically create
-the grass geometry from the Bezier curves, and a fragment shader to shade the grass blades.
-
-The base code provided includes all of the basic Vulkan setup, including a compute pipeline that will run your compute
-shaders and two graphics pipelines, one for rendering the geometry that grass will be placed on and the other for 
-rendering the grass itself. Your job will be to write the shaders for the grass graphics pipeline and the compute pipeline, 
-as well as binding any resources (descriptors) you may need to accomplish the tasks described in this assignment.
+This is my first time using Vulkan. In this repository, I implemented a grass simulator and renderer. I represented individual grass blades as Bezier curves, and I used compute shaders to perform physics calculations on them and to cull unneeded blades for efficiency. After this, the remaining blades are passed into several resulting shaders. This includes tessellation shaders that dynamically create the grass geometry from Bezier curves and a fragment shader to shade the blades. I additionally built off the base code to bind all descriptors needed to accomplish this end result.
 
 ![](img/grass.gif) ![](img/grass2.gif)
 

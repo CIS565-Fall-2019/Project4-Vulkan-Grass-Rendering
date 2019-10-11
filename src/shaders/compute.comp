@@ -51,9 +51,9 @@ bool inBounds(float value, float bounds) {
 vec3 windDir = normalize(vec3(2.5f, 0.f, 4.f));
 
 float windIntensity(vec3 v) {
-	float strength = sin(v.x * windDir.x * 10.f + totalTime) + 
-					 cos(v.z * windDir.z * 10.f + totalTime) + 1.8f;
-	return strength * strength * 50.f;
+	float strength = sin(v.x * windDir.x + totalTime) + 
+					 cos(v.z * windDir.z + totalTime) + 1.8f;
+	return strength;
 }
 
 void main() {
@@ -63,10 +63,18 @@ void main() {
 	}
 	barrier(); // Wait till all threads reach this point
 
-	int totBlades = int(atomicAdd(numBlades.vertexCount, 1));
 	Blade currBlade = inputBlades.bladeAt[gl_GlobalInvocationID.x];
 
     // TODO: Apply forces on every blade and update the vertices in the buffer
+	// Variables to neaten up
+	vec3 v0 = currBlade.v0.xyz;
+	vec3 v1 = currBlade.v1.xyz;
+	vec3 v2 = currBlade.v2.xyz;
+	vec3 up = currBlade.up.xyz;
+	float orientation = currBlade.v0.w;
+	float height =		currBlade.v1.w;
+	float width =		currBlade.v2.w;
+	float stiffness =	currBlade.up.w;
 
 	// GRAVITY***
 	// Environmental:
@@ -76,8 +84,8 @@ void main() {
 	vec3 gE = gravDir * accel;
 
 	// Front Gravity:
-	vec3 bitangent = vec3(sin(currBlade.v0.w), 0.f, cos(currBlade.v0.w)); // Same as grass.tese
-	vec3 f = cross(currBlade.up.xyz, bitangent);
+	vec3 bitangent = vec3(sin(orientation), 0.f, cos(orientation)); // Same as grass.tese
+	vec3 f = cross(up, bitangent);
 	vec3 gF = 0.25f * length(gE) * normalize(f);
 
 	// Total
@@ -85,16 +93,16 @@ void main() {
 
 
 	// RECOVERY***
-	vec3 iv2 = currBlade.v0.xyz + normalize(currBlade.up.xyz) * currBlade.v1.w; // Up scaled by height
-	vec3 r = (iv2 - currBlade.v2.xyz) * currBlade.up.w; // Difference multiplied by stiffness
+	vec3 iv2 = v0 + normalize(up) * height; // Up scaled by height
+	vec3 rec = (iv2 - v2) * stiffness; // Difference multiplied by stiffness
 
 
 	// WIND***
-	vec3 wi = windDir * windIntensity(currBlade.v0.xyz);
-	vec3 diff = currBlade.v2.xyz - currBlade.v0.xyz;
+	vec3 wi = windDir * windIntensity(v0);
+	vec3 diff = v2 - v0;
 
 	float fd = 1.f - abs(dot(wi / length(wi), diff / length(diff)));
-	float fr = dot(diff, currBlade.up.xyz) / currBlade.v1.w;
+	float fr = dot(diff, up) / height;
 	float theta = fd * fr;
 
 	// Resulting force
@@ -102,37 +110,85 @@ void main() {
 
 
 	// TOTAL FORCE***
-	vec3 tv2 = (g + r + w) * deltaTime;
-	currBlade.v2.xyz += tv2;
+	vec3 tv2 = (g + rec + w) * deltaTime;
+	v2 += tv2;
 
 	// Ensure above ground
-	currBlade.v2.xyz = currBlade.v2.xyz - currBlade.up.xyz * 
-				min(dot(currBlade.up.xyz, currBlade.v2.xyz - currBlade.v0.xyz), 0.f);
+	v2 = v2 - up * min(dot(up, v2 - v0), 0.f);
 	
 	// Update v1
-	float lProj = length(currBlade.v2.xyz - currBlade.v0.xyz - currBlade.up.xyz * 
-					dot(currBlade.v2.xyz - currBlade.v0.xyz, currBlade.up.xyz));
+	float lProj = length(v2 - v0 - up * dot(v2 - v0, up));
 
-	currBlade.v1.xyz = currBlade.v0.xyz + currBlade.v1.w * currBlade.up.xyz * 
-					max(1.f - lProj / currBlade.v1.w, 0.05f * max(lProj / currBlade.v1.w, 1.f));
+	v1 = v0 + height * up * max(1.f - lProj / height, 0.05f * max(lProj / height, 1.f));
 
 	// Length update
-	float l0 = length(currBlade.v2.xyz - currBlade.v0.xyz);
-	float l1 = length(currBlade.v1.xyz - currBlade.v0.xyz) +
-			   length(currBlade.v2.xyz - currBlade.v1.xyz);
+	float l0 = length(v2 - v0);
+	float l1 = length(v1 - v0) +
+			   length(v2 - v1);
 	float l = (2.f * l0 + l1) / 3.f;  // Simplified since there's only two control points
 
-	float rl = currBlade.v1.w / l;
+	float r = height / l;
 
 	// Final update:
-	//inputBlades.bladeAt[gl_GlobalInvocationID.x]
-	currBlade.v1.xyz = currBlade.v0.xyz + rl * (currBlade.v1.xyz - currBlade.v0.xyz);
-	currBlade.v2.xyz = currBlade.v1.xyz + rl * (currBlade.v2.xyz - currBlade.v1.xyz);
+	vec3 newV1 = v0 + r * (v1 - v0);
+	vec3 newV2 = newV1 + r * (v2 - v1); // Think my error before was from using the newV1 for both v1s here
+	inputBlades.bladeAt[gl_GlobalInvocationID.x].v1.x = newV1.x;
+	inputBlades.bladeAt[gl_GlobalInvocationID.x].v1.y = newV1.y;
+	inputBlades.bladeAt[gl_GlobalInvocationID.x].v1.z = newV1.z;
+	
+	inputBlades.bladeAt[gl_GlobalInvocationID.x].v2.x = newV2.x;
+	inputBlades.bladeAt[gl_GlobalInvocationID.x].v2.y = newV2.y;
+	inputBlades.bladeAt[gl_GlobalInvocationID.x].v2.z = newV2.z;
 
 	// TODO: Cull blades that are too far away or not in the camera frustum and write them
 	// to the culled blades buffer
 	// Note: to do this, you will need to use an atomic operation to read and update numBlades.vertexCount
 	// You want to write the visible blades to the buffer without write conflicts between threads
 
-	culledBlades.bladeAt[totBlades] = inputBlades.bladeAt[gl_GlobalInvocationID.x];
+	vec4 camPos = inverse(camera.view) * vec4(0.f, 0.f, 0.f, 1.f);//-vec3(camera.view[3]);
+	
+	// Orientation Culling - I was going to use the camera's forward vector, 
+	//						but I think that'd look weird if we're too close to the grass
+	bool cullForOrientation = abs(dot(normalize(f), normalize(vec3(camPos) - v0))) >= 0.9f;
+	
+	// View-frustum culling
+	float tolerance = 0.2f; // From paper
+	vec3 m = 0.25f * v0 * 0.5f * newV1 * 0.25f * newV2; // approximate midpoint
+	vec4 mNDC  = camera.proj * camera.view * vec4(m, 1.f);
+	vec4 v0NDC = camera.proj * camera.view * vec4(v0, 1.f);
+	vec4 v2NDC = camera.proj * camera.view * vec4(v2, 1.f);
+	
+	bool cullV0 = !inBounds(v0NDC.x, v0NDC.w + tolerance) || 
+				  !inBounds(v0NDC.y, v0NDC.w + tolerance) || 
+				  !inBounds(v0NDC.z, v0NDC.w + tolerance);
+	bool cullV2 = !inBounds(v2NDC.x, v2NDC.w + tolerance) || 
+			      !inBounds(v2NDC.y, v2NDC.w + tolerance) || 
+			      !inBounds(v2NDC.z, v2NDC.w + tolerance);
+	bool cullM  = !inBounds(mNDC.x, mNDC.w + tolerance) || 
+				  !inBounds(mNDC.y, mNDC.w + tolerance) || 
+				  !inBounds(mNDC.z, mNDC.w + tolerance);
+
+	bool cullView = cullV0 && cullV2 && cullM;
+
+
+	// Distance Culling
+	float maxDist = 28.f;
+	float currDist = length(vec3(camPos) - v0);
+	bool cullDist = false;
+
+	// Up to 28, half will get culled. After 28, all will be culled.
+	// Four buckets: 0-7, 7-14 (mod 8), 14-21 (mod4), 21-28 (mod2)
+	cullDist = currDist >= maxDist;
+	if (!cullDist && currDist > 7.f) {
+		int modDist = int(currDist) / 7;
+		int modN = int(pow(2, 4 - modDist));
+
+		cullDist = cullDist || mod(gl_GlobalInvocationID.x, modN) == 0;
+	}
+
+	
+	if (!cullForOrientation && !cullView && !cullDist) {
+		int totBlades = int(atomicAdd(numBlades.vertexCount, 1));
+		culledBlades.bladeAt[totBlades] = inputBlades.bladeAt[gl_GlobalInvocationID.x];
+	}
 }
