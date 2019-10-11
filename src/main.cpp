@@ -142,11 +142,24 @@ int main() {
     glfwSetWindowSizeCallback(GetGLFWWindow(), resizeCallback);
     glfwSetMouseButtonCallback(GetGLFWWindow(), mouseDownCallback);
     glfwSetCursorPosCallback(GetGLFWWindow(), mouseMoveCallback);
-
+	
+	double previousTime = glfwGetTime();
+	int frameCount = 0;
     while (!ShouldQuit()) {
         glfwPollEvents();
         scene->UpdateTime();
         renderer->Frame();
+		double currentTime = glfwGetTime();
+		frameCount++;
+		// If a second has passed.
+		if (currentTime - previousTime >= 1.0)
+		{
+			// Display the frame count here any way you want.
+			printf("%d\n", frameCount);
+
+			frameCount = 0;
+			previousTime = currentTime;
+		}
     }
 
     vkDeviceWaitIdle(device->GetVkDevice());
