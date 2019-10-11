@@ -12,7 +12,7 @@ This project presents a GPU-parallelized grass simulator and renderer created wi
 
 ![](img/mygrass.gif)
 
-### Grass Rendering
+## Grass Rendering
 
 ![](img/mygrass0.gif)
 
@@ -20,7 +20,7 @@ This project is an implementation of the paper, [Responsive Real-Time Grass Rend
 
 As described in the paper, each blade of grass is represented by a three-point bezier curve, as well as width, height, and rotation values. Each blade is tessellated and drawn along these curves, and color mapped with a ramp over the surface's v coordinate.
 
-### Simulating Forces
+## Simulating Forces
 
 Forces are computed and applied to the tip of each grass blade, then the middle bezier point is updated to a reasonable midpoint position. All points are adjusted to preserve blade length.
 
@@ -30,25 +30,25 @@ The grass with gravity and resistant recovery forces
 ![](img/mygrass2.gif)
 The grass with wind forces. Wind is globally computed as a combined sinusoidal function across 3D space. As described in the paper, wind's influence on each blade depends on how much the blade is facing into the wind and how tall the blade is.
 
-### Culling tests
+## Culling tests
 
 ![](img/mygrass3.gif)
 
 To save rendering costs, the renderer culls blades that are too far away, rotated perpendicular to the camera, or are outside of the visible scene.
 
-## Orientation culling
+### Orientation culling
 
 Blades that are facing perpendicularly to the camera will render as thin slices, maybe even less than 1 pixel thick. In these cases, we can omit these blades from rendering.
 
-## View-frustum culling
+### View-frustum culling
 
 Blades that are not present in the camera's visibility frustum are not rendered.
 
-## Distance culling
+### Distance culling
 
 Blades are placed into 'buckets' based on their distance from the camera. Depending on which bucket a blade is in, it has an increasing chance of being culled. So, at max distance, all blades in further buckets are culled. This random selection is achieved by using the already randomized height parameter of each blade. While this does bias the visibility of taller grass blades at further distances, that is not necessarily a bad thing; taller blades will be more visible than shorter ones, so it makes sense to cull the shortest blades first. Distance culling is demonstrated clearly in the GIF above.
 
-### Performance Analysis
+## Performance Analysis
 
 Performance analysis done from default, unmodified camera view. With all culling methods active and 8192 blades, the renderer achieves roughly 800 fps.
 
@@ -64,5 +64,5 @@ With all optimizations on, the relationship between the number of blades and the
 
 ![](img/chart.png)
 
-### External Code
+## External Code
 FPS computation code adapted from https://gamedev.stackexchange.com/questions/133173/how-to-calculate-fps-in-glfw?fbclid=IwAR1Qrc3KmuCxXTom-aJQ4VyFUsQC3PDFRGG46rFW2fCXIlvwyiHcYWOc9DM
