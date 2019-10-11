@@ -92,7 +92,7 @@ Bucket 1 is between distances [14, 21) and every fourth blade is culled.
 
 Bucket 4 is between distances [21, 28) and every other blade is culled.
 
-The picture on the left below includes the bucket-based culling; for comparison, the right image only culls after 28 units.
+The upper picture below includes the bucket-based culling; for comparison, the bottom image only culls after 28 units.
 
 ![](img/cullBuckets.gif)    ![](img/justDist.gif)
 
@@ -101,3 +101,5 @@ The picture on the left below includes the bucket-based culling; for comparison,
 The performance analysis is where you will investigate how...
 * Your renderer handles varying numbers of grass blades
 * The improvement you get by culling using each of the three culling tests
+
+![](img/fps.png)
