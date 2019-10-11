@@ -25,9 +25,11 @@ As described in the paper, each blade of grass is represented by a three-point b
 Forces are computed and applied to the tip of each grass blade, then the middle bezier point is updated to a reasonable midpoint position. All points are adjusted to preserve blade length.
 
 ![](img/mygrass1.gif)
+
 The grass with gravity and resistant recovery forces
 
 ![](img/mygrass2.gif)
+
 The grass with wind forces. Wind is globally computed as a combined sinusoidal function across 3D space. As described in the paper, wind's influence on each blade depends on how much the blade is facing into the wind and how tall the blade is.
 
 ## Culling tests
